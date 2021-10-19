@@ -8,7 +8,7 @@ public class SplitNode : BaseRuntimeNode
     [field: SerializeField] public FlowInput Input { get; set; }
 
     private void Evaluate(NodeEvaluationInfo info, [OutputLayoutIndex(0)] out MVector x, [OutputLayoutIndex(1)] out MVector y, [OutputLayoutIndex(2)] out MVector z, [OutputLayoutIndex(3)] out MVector w) {
-        MVector v = (MVector)info.Container.EvaluateInput(Input);
+        MVector v = info.Container.EvaluateInput<MVector>(Input);
 
         x = new MVector(v.X, 0);
         y = new MVector(0, v.Y);
