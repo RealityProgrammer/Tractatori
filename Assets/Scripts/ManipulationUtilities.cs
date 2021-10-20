@@ -132,12 +132,16 @@ public static class ManipulationUtilities
                 if (method.Name == EvaluateMethodName) {
                     var parameters = method.GetParameters();
 
-                    if (parameters.Length == 0 || (parameters.Length == 1 && parameters[0].ParameterType == NodeEvaluationInfoType)) {
+                    //Debug.Log(nodeType.FullName);
+                    //if (parameters.Length == 0 || (parameters.Length == 1 && parameters[0].ParameterType == NodeEvaluationInfoType)) {
                         output = new NodeEvaluateCache(method);
                         _nodeEvaluateMethodCache.Add(nodeType, output);
 
+                        //Debug.Log("Yes");
+
                         return output;
-                    }
+                    //}
+                    //Debug.Log("NO");
                 }
             }
 

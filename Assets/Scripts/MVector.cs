@@ -5,6 +5,11 @@ using UnityEngine;
 
 [Serializable]
 public struct MVector {
+    public static MVector Zero1 = new MVector(0);
+    public static MVector Zero2 = new MVector(0, 0);
+    public static MVector Zero3 = new MVector(0, 0, 0);
+    public static MVector Zero4 = new MVector(0, 0, 0, 0);
+
     [field: SerializeField] public Vector4 Vector { get; set; }
     public float X {
         get => Vector.x;

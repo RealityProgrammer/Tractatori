@@ -20,7 +20,8 @@ public class EditorVectorValueNode : BaseEditorConstantNode {
     public override void InitializeFields(VisualElement contents) {
         EnumField enumField = new EnumField("Axis Mode", VectorAxis.XYZW);
 		enumField.name = "Axis Mode";
-        enumField.SetValueWithoutNotify((VectorAxis)(((VectorValueNode)UnderlyingRuntimeNode).Value.Axis - 2));
+
+        enumField.SetValueWithoutNotify((VectorAxis)(((VectorValueNode)UnderlyingRuntimeNode).Value.Axis - 1));
 
         var style = enumField.Q(className: "unity-enum-field__input").style;
         style.position = Position.Absolute;
@@ -37,6 +38,7 @@ public class EditorVectorValueNode : BaseEditorConstantNode {
 
             switch (value) {
 				default:
+                case VectorAxis.X:
 					((VectorValueNode)UnderlyingRuntimeNode).Value = new MVector(oldVector.X);
 					break;
 
@@ -171,7 +173,8 @@ public class EditorVectorValueNode : BaseEditorConstantNode {
 
 [Flags]
 public enum VectorAxis {
-    XY = 0,
-	XYZ = 1,
-	XYZW = 2,
+    X = 0,
+    XY = 1,
+	XYZ = 2,
+	XYZW = 3,
 }
