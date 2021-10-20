@@ -83,6 +83,9 @@ public class STEditorGraphView : GraphView
             STGraphEditorWindow.CurrentEditingAsset.EntrySequence = ((BaseEditorNode)edge.input.node).UnderlyingRuntimeNode.GUID;
         };
         node.outputContainer.Add(port);
+        node.RegisterCallback<MouseOverEvent>((evt) => {
+            Debug.Log("Mouse Over kek");
+        });
 
         node.capabilities &= ~Capabilities.Collapsible;
         node.capabilities &= ~Capabilities.Deletable;

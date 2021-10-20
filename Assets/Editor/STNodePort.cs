@@ -19,6 +19,9 @@ public class STNodePort : Port
         m_EdgeConnector = new EdgeConnector<Edge>(ConnectionCallback);
 
         this.AddManipulator(m_EdgeConnector);
+
+        this.RegisterCallback<DetachFromPanelEvent>((evt) => {
+        });
     }
 
     public override void Connect(Edge edge) {

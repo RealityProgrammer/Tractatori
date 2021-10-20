@@ -26,65 +26,67 @@ public static class ManipulationUtilities
             OutParameterCount = Parameters.CountOutParameters();
             LayoutIndex = new int[Parameters.Length];
 
-            if (Parameters[0].ParameterType == NodeEvaluationInfoType) {
-                ContainerParameterIndex = 0;
-            } else {
+            if (Parameters.Length != 0) {
+                if (Parameters[0].ParameterType == NodeEvaluationInfoType) {
+                    ContainerParameterIndex = 0;
+                } else {
+                    for (int i = 0; i < Parameters.Length; i++) {
+                        var parameter = Parameters[i];
+
+                        if (parameter.ParameterType == NodeEvaluationInfoType && parameter.GetCustomAttribute<ExplicitContainerParameterAttribute>() != null) {
+                            ContainerParameterIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                int outTracker = 0;
                 for (int i = 0; i < Parameters.Length; i++) {
                     var parameter = Parameters[i];
 
-                    if (parameter.ParameterType == NodeEvaluationInfoType && parameter.GetCustomAttribute<ExplicitContainerParameterAttribute>() != null) {
-                        ContainerParameterIndex = i;
-                        break;
-                    }
-                }
-            }
+                    if (parameter.IsOut) {
+                        var attr = parameter.GetCustomAttribute<OutputLayoutIndexAttribute>();
 
-            int outTracker = 0;
-            for (int i = 0; i < Parameters.Length; i++) {
-                var parameter = Parameters[i];
-
-                if (parameter.IsOut) {
-                    var attr = parameter.GetCustomAttribute<OutputLayoutIndexAttribute>();
-
-                    if (attr != null) {
-                        LayoutIndex[i] = attr.Index;
+                        if (attr != null) {
+                            LayoutIndex[i] = attr.Index;
+                        } else {
+                            LayoutIndex[i] = outTracker;
+                            outTracker++;
+                        }
                     } else {
-                        LayoutIndex[i] = outTracker;
-                        outTracker++;
+                        LayoutIndex[i] = -1;
                     }
-                } else {
-                    LayoutIndex[i] = -1;
                 }
-            }
 
-            // Make sure there are no duplication
+                // Make sure there are no duplication
 #if UNITY_EDITOR
-            bool duplicated = false;
+                bool duplicated = false;
 
-            _duplicationBuffer.Clear();
-            foreach (var index in LayoutIndex) {
-                if (index < 0) continue;
+                _duplicationBuffer.Clear();
+                foreach (var index in LayoutIndex) {
+                    if (index < 0) continue;
 
-                if (_duplicationBuffer.Contains(index)) {
-                    duplicated = true;
-                    break;
-                } else {
-                    _duplicationBuffer.Add(index);
-                }
-            }
-
-            if (duplicated) {
-                Debug.LogWarning("Evaluate method of node type " + Method.DeclaringType.FullName + " contains invalid output layout index. Thus the output layout index of this node will fallback to incremental sequence.");
-
-                int t = 0;
-                for (int i = 0; i < LayoutIndex.Length; i++) {
-                    if (Parameters[i].IsOut) {
-                        LayoutIndex[i] = t;
-                        t++;
+                    if (_duplicationBuffer.Contains(index)) {
+                        duplicated = true;
+                        break;
+                    } else {
+                        _duplicationBuffer.Add(index);
                     }
                 }
-            }
+
+                if (duplicated) {
+                    Debug.LogWarning("Evaluate method of node type " + Method.DeclaringType.FullName + " contains invalid output layout index. Thus the output layout index of this node will fallback to incremental sequence.");
+
+                    int t = 0;
+                    for (int i = 0; i < LayoutIndex.Length; i++) {
+                        if (Parameters[i].IsOut) {
+                            LayoutIndex[i] = t;
+                            t++;
+                        }
+                    }
+                }
 #endif
+            }
         }
 
         public bool UseContainerParameter => ContainerParameterIndex != -1;
@@ -94,6 +96,10 @@ public static class ManipulationUtilities
             return $"NodeEvaluateCache(Method = Evaluate, Parameters = ({string.Join(", ", Parameters.Select(x => x.IsOut ? x.ParameterType.GetElementType().FullName + " (Out)" : x.ParameterType.FullName))}), Out Parameter Count = {OutParameterCount}, Container Parameter Index = {ContainerParameterIndex})";
         }
     }
+
+    public static readonly Type VoidType = typeof(void);
+    public static readonly Type YieldInstructionType = typeof(YieldInstruction);
+    public static readonly Type CustomYieldInstructionType = typeof(CustomYieldInstruction);
 
     private static readonly Dictionary<Type, NodeEvaluateCache> _nodeEvaluateMethodCache = new Dictionary<Type, NodeEvaluateCache>();
 
@@ -116,7 +122,6 @@ public static class ManipulationUtilities
         return GetEvaluateCacheInternal(nodeType);
     }
 
-    private static readonly Type VoidType = typeof(void);
     private static readonly Type NodeEvaluationInfoType = typeof(NodeEvaluationInfo);
     private static NodeEvaluateCache GetEvaluateCacheInternal(Type nodeType) {
         if (_nodeEvaluateMethodCache.TryGetValue(nodeType, out var output)) {
@@ -125,16 +130,13 @@ public static class ManipulationUtilities
             var methods = nodeType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
             foreach (var method in methods) {
                 if (method.Name == EvaluateMethodName) {
-                    if (method.ReturnType == VoidType) {
-                        var parameters = method.GetParameters();
+                    var parameters = method.GetParameters();
 
-                        if (parameters.Length > 0) {
-                            output = new NodeEvaluateCache(method);
+                    if (parameters.Length == 0 || (parameters.Length == 1 && parameters[0].ParameterType == NodeEvaluationInfoType)) {
+                        output = new NodeEvaluateCache(method);
+                        _nodeEvaluateMethodCache.Add(nodeType, output);
 
-                            _nodeEvaluateMethodCache.Add(nodeType, output);
-
-                            return output;
-                        }
+                        return output;
                     }
                 }
             }
@@ -164,7 +166,7 @@ public static class ManipulationUtilities
         }
     }
 
-    public static object[] InvokeNodeEvaluateMethod(this BaseRuntimeNode node, NodeEvaluationInfo container) {
+    public static object[] InvokeNodeEvaluateMethod(this BaseRuntimeNode node, NodeEvaluationInfo container, out object methodReturn) {
         var cache = GetEvaluateCacheInternal(node.NodeType);
 
         if (cache != null) {
@@ -176,7 +178,7 @@ public static class ManipulationUtilities
 
             int outSize = cache.OutParameterCount;
 
-            cache.Method.Invoke(node, invokeParameters);
+            methodReturn = cache.Method.Invoke(node, invokeParameters);
 
             if (outSize == 0) {
                 return EmptyReturnArray;
@@ -184,6 +186,7 @@ public static class ManipulationUtilities
 
             return CollectOutReturns(invokeParameters, cache.Parameters, outSize);
         } else {
+            methodReturn = null;
             return null;
         }
     }

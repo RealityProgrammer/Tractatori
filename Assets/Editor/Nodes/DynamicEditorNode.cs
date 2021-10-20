@@ -76,7 +76,7 @@ public class DynamicEditorNode : BaseEditorNode {
 
         var evaluateCache = ManipulationUtilities.GetEvaluateCache(UnderlyingRuntimeNode.NodeType);
         if (evaluateCache == null) {
-            Debug.Log("Something gone wrong while building port for runtime node of type " + UnderlyingRuntimeNode.NodeType.FullName);
+            Debug.LogWarning("Something gone wrong while building port for runtime node of type " + UnderlyingRuntimeNode.NodeType.FullName);
         } else {
             int outTracker = 0;
 

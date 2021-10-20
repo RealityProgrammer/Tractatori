@@ -201,7 +201,7 @@ public class STGraphEditorWindow : EditorWindow
 
             // Link Entries
             if (sn.UnderlyingRuntimeNode.GUID == CurrentEditingAsset.EntrySequence) {
-                STEditorUtilities.LinkPort(_graphView, _graphView.EntryNode.Q<STNodePort>("output-port"), sn.Q<STNodePort>(DynamicEditorSequenceNode.PreviousPortName));
+                STEditorUtilities.LinkPort(_graphView, _graphView.EntryNode.Q<STNodePort>("output-port"), sn.Q<STNodePort>(DynamicEditorNode.PreviousPortName));
             }
 
             if (sn.UnderlyingSequenceNode.IsFinal) {
@@ -209,7 +209,7 @@ public class STGraphEditorWindow : EditorWindow
             }
 
             // Link the next sequence node
-            for (int j = i + 1; j < sequenceNodes.Count; j++) {
+            for (int j = 0; j < sequenceNodes.Count; j++) {
                 if (sn.UnderlyingSequenceNode.Next.GUID == sequenceNodes[j].UnderlyingSequenceNode.GUID) {
                     STEditorUtilities.LinkSequenceNodes(_graphView, sequenceNodes[i], sequenceNodes[j]);
                     break;
@@ -241,8 +241,6 @@ public class STGraphEditorWindow : EditorWindow
                     var find = FindEditorNode(allNodes, flow.GUID);
 
                     if (find != null) {
-                        //Debug.Log(find.UnderlyingRuntimeNode.NodeType.FullName + " -> " + (find.Query<STNodePort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First() == null));
-
                         STEditorUtilities.LinkPort(_graphView, find.Query<STNodePort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), sn.Q<STNodePort>(property.Property.Name));
                     } else {
                         property.Property.SetValue(sn.UnderlyingRuntimeNode, FlowInput.Null);
