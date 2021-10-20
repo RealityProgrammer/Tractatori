@@ -180,7 +180,7 @@ public class STGraphEditorWindow : EditorWindow
             }
         }
 
-        ConnectAllSequenceNodes(sequenceNodes, nonSequenceNodes);
+        ConnectAllSequenceNodes(sequenceNodes, nodes);
 
         Debug.Log("Finish Loading Graph");
     }
@@ -195,7 +195,7 @@ public class STGraphEditorWindow : EditorWindow
         return null;
     }
 
-    void ConnectAllSequenceNodes(List<DynamicEditorSequenceNode> sequenceNodes, List<BaseEditorNode> nonSequenceNodes) {
+    void ConnectAllSequenceNodes(List<DynamicEditorSequenceNode> sequenceNodes, List<BaseEditorNode> allNodes) {
         for (int i = 0; i < sequenceNodes.Count; i++) {
             var sn = sequenceNodes[i];
 
@@ -224,10 +224,12 @@ public class STGraphEditorWindow : EditorWindow
                 var flow = (FlowInput)field.GetValue(sn.UnderlyingSequenceNode);
 
                 if (!string.IsNullOrEmpty(flow.GUID)) {
-                    var find = FindEditorNode(nonSequenceNodes, flow.GUID);
+                    var find = FindEditorNode(allNodes, flow.GUID);
 
                     if (find != null) {
                         STEditorUtilities.LinkPort(_graphView, find.Query<STNodePort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), sn.Q<STNodePort>(field.Name));
+                    } else {
+                        field.SetValue(sn.UnderlyingRuntimeNode, FlowInput.Null);
                     }
                 }
             }
@@ -236,12 +238,14 @@ public class STGraphEditorWindow : EditorWindow
                 var flow = (FlowInput)property.Property.GetValue(sn.UnderlyingSequenceNode);
 
                 if (!string.IsNullOrEmpty(flow.GUID)) {
-                    var find = FindEditorNode(nonSequenceNodes, flow.GUID);
-                    Debug.Log(find);
+                    var find = FindEditorNode(allNodes, flow.GUID);
 
                     if (find != null) {
+                        //Debug.Log(find.UnderlyingRuntimeNode.NodeType.FullName + " -> " + (find.Query<STNodePort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First() == null));
+
                         STEditorUtilities.LinkPort(_graphView, find.Query<STNodePort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), sn.Q<STNodePort>(property.Property.Name));
-                        //STEditorUtilities.LinkPort(_graphView, find.Q<STNodePort>("output"), sn.Q<STNodePort>(property.Property.Name));
+                    } else {
+                        property.Property.SetValue(sn.UnderlyingRuntimeNode, FlowInput.Null);
                     }
                 }
             }

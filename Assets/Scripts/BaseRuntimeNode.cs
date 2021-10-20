@@ -16,10 +16,13 @@ public partial class BaseRuntimeNode : ScriptableObject
         }
     }
 
-    public string GUID { get; private set; }
+    [field: SerializeField] public string GUID { get; private set; }
 
-    public BaseRuntimeNode() {
-        GUID = Guid.NewGuid().ToString();
+    // Better call it OnEnable instead of constructor cuz only called in OnEnable, old GUID data is serialized on time
+    void OnEnable() {
+        if (string.IsNullOrEmpty(GUID)) {
+            GUID = Guid.NewGuid().ToString();
+        }
     }
 
     public virtual object[] Invoke(NodeEvaluationInfo container) {

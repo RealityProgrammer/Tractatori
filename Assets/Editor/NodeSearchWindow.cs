@@ -91,6 +91,13 @@ public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider {
             level = 2,
         });
 
+        tree.Add(new SearchTreeEntry(new GUIContent("String", indent)) {
+            userData = new ConstantNodeCreationRequest() {
+                UnderlyingNodeType = typeof(StringValueNode),
+            },
+            level = 2,
+        });
+
         return tree;
     }
 

@@ -38,7 +38,8 @@ public static class ManipulationUtilities
                     }
                 }
             }
-                
+
+            int outTracker = 0;
             for (int i = 0; i < Parameters.Length; i++) {
                 var parameter = Parameters[i];
 
@@ -48,7 +49,8 @@ public static class ManipulationUtilities
                     if (attr != null) {
                         LayoutIndex[i] = attr.Index;
                     } else {
-                        LayoutIndex[i] = i;
+                        LayoutIndex[i] = outTracker;
+                        outTracker++;
                     }
                 } else {
                     LayoutIndex[i] = -1;

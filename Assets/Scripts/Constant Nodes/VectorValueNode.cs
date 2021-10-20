@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class VectorValueNode : BaseRuntimeNode, IConstantValueNode
 {
-    public MVector Value;
+    [field: SerializeField]
+    public MVector Value { get; set; }
 
     private void Evaluate([OutputLayoutIndex(0)] out MVector value) {
         value = Value;

@@ -8,8 +8,8 @@ using UnityEditor.Experimental.GraphView;
 
 public abstract class BaseEditorConstantNode : BaseEditorNode {
     public override void Initialize() {
-        var evaluateMethod = ManipulationUtilities.GetEvaluateCache(UnderlyingRuntimeNode.NodeType).Method;
-        var parameters = evaluateMethod.GetParameters();
+        var cache = ManipulationUtilities.GetEvaluateCache(UnderlyingRuntimeNode.NodeType);
+        var parameters = cache.Parameters;
 
         foreach (var parameter in parameters) {
             if (!parameter.IsOut) continue;

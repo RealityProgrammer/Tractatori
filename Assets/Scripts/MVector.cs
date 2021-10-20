@@ -3,22 +3,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[Serializable]
 public struct MVector {
-    public Vector4 Vector { get; set; }
+    [field: SerializeField] public Vector4 Vector { get; set; }
     public float X {
         get => Vector.x;
+        set => Vector = new Vector4(value, Vector.y, Vector.z, Vector.w);
     }
     public float Y {
         get => Vector.y;
+        set => Vector = new Vector4(Vector.x, value, Vector.z, Vector.w);
     }
     public float Z {
         get => Vector.z;
+        set => Vector = new Vector4(Vector.x, Vector.y, value, Vector.w);
     }
     public float W {
         get => Vector.w;
+        set => Vector = new Vector4(Vector.x, Vector.y, Vector.z, value);
     }
 
-    public int Axis { get; private set; }
+    [field: SerializeField] public int Axis { get; private set; }
 
     public MVector(float x) {
         Vector = new Vector4(x, 0);
@@ -106,6 +111,18 @@ public struct MVector {
             case 2: return new MVector(v.x, v.y);
             case 3: return new MVector(v.x, v.y, v.z);
             case 4: return new MVector(v.x, v.y, v.z, v.w);
+        }
+    }
+
+    public override string ToString() {
+        switch (Axis) {
+            case 1:
+            default:
+                return "MVector(" + X + ")";
+
+            case 2: return "MVector(" + X + ", " + Y + ")";
+            case 3: return "MVector(" + X + ", " + Y + ", " + Z + ")";
+            case 4: return "MVector(" + X + ", " + Y + ", " + Z + ", " + W + ")";
         }
     }
 }

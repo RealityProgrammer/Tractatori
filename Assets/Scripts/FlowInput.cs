@@ -6,6 +6,8 @@ using UnityEngine;
 [Serializable]
 public struct FlowInput
 {
+    public static FlowInput Null = new FlowInput("00000000-0000-0000-0000-000000000000", 0);
+
     [field: SerializeField] public string GUID { get; set; }
     [field: SerializeField] public int OutputIndex { get; set; }
 

@@ -28,9 +28,13 @@ public class ManipulationContainer : ScriptableObject
     }
 
     public T EvaluateInput<T>(FlowInput input) {
-        BaseRuntimeNode node = FindNode(input.GUID);
+        return (T)EvaluateInput(input);
+		
+    public object EvaluateInput(FlowInput input) {
+        var node = FindNode(input.GUID);
+        var invokeReturn = node.Invoke(evaluationInfo);
 
-        return (T)node.Invoke(evaluationInfo)[ManipulationUtilities.FindParameterOutputIndexOutOnly(node.NodeType, input.OutputIndex)];
+        return invokeReturn[ManipulationUtilities.FindParameterOutputIndexOutOnly(node.NodeType, input.OutputIndex)];
     }
 
     private void EvaluateCurrentSequenceNode() {

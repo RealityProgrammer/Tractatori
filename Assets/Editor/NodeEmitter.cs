@@ -21,10 +21,12 @@ public abstract class NodeCreationRequest {
 public class ConstantNodeCreationRequest : NodeCreationRequest {
     private static readonly Dictionary<Type, Func<ConstantNodeCreationRequest, BaseEditorNode>> _constantNodeCreation = new Dictionary<Type, Func<ConstantNodeCreationRequest, BaseEditorNode>>() {
         [typeof(VectorValueNode)] = (creation) => new EditorVectorValueNode(ScriptableObject.CreateInstance(creation.UnderlyingNodeType) as VectorValueNode),
+        [typeof(StringValueNode)] = (creation) => new EditorStringValueNode(ScriptableObject.CreateInstance(creation.UnderlyingNodeType) as StringValueNode),
     };
 
     private static readonly Dictionary<Type, Func<ConstantNodeCreationRequest, BaseEditorNode>> _constantNodeCreationExists = new Dictionary<Type, Func<ConstantNodeCreationRequest, BaseEditorNode>>() {
         [typeof(VectorValueNode)] = (creation) => new EditorVectorValueNode(creation.ExistInstance as VectorValueNode),
+        [typeof(StringValueNode)] = (creation) => new EditorStringValueNode(creation.ExistInstance as StringValueNode),
     };
 
     public override NodeCreationResult Handle() {

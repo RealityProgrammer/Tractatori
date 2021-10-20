@@ -11,7 +11,8 @@ public class BaseEditorNode : Node
 
     static BaseEditorNode() {
         _portColorDictionary = new Dictionary<Type, Color>() {
-            [typeof(Vector4)] = new Color(0f, 0.65f, 1f),
+            [typeof(MVector)] = new Color(0f, 0.65f, 1f),
+            [typeof(string)] = new Color32(0xCE, 0x9D, 0x82, 0xFF),
         };
     }
 
