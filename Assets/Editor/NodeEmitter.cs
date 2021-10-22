@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 public class NodeCreationResult {
     public BaseEditorNode Output { get; set; }
@@ -27,6 +28,8 @@ public class ConstantNodeCreationRequest : NodeCreationRequest {
     private static readonly Dictionary<Type, Func<ConstantNodeCreationRequest, BaseEditorNode>> _constantNodeCreationExists = new Dictionary<Type, Func<ConstantNodeCreationRequest, BaseEditorNode>>() {
         [typeof(VectorValueNode)] = (creation) => new EditorVectorValueNode(creation.ExistInstance as VectorValueNode),
         [typeof(StringValueNode)] = (creation) => new EditorStringValueNode(creation.ExistInstance as StringValueNode),
+        [typeof(UnityObjectNode)] = (creation) => new EditorUnityObjectNode(creation.ExistInstance as UnityObjectNode),
+        [typeof(BindingPropertyNode)] = (creation) => new EditorBindingPropertyNode(creation.ExistInstance as BindingPropertyNode),
     };
 
     public override NodeCreationResult Handle() {
@@ -41,7 +44,7 @@ public class ConstantNodeCreationRequest : NodeCreationRequest {
                 return result;
             }
         } else {
-            if (_constantNodeCreationExists.TryGetValue(ExistInstance.GetType(), out var @delegate)) {
+            if (_constantNodeCreationExists.TryGetValue(ExistInstance.NodeType, out var @delegate)) {
                 NodeCreationResult result = new NodeCreationResult() {
                     Output = @delegate.Invoke(this),
                     Result = true,

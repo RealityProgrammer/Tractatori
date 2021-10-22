@@ -73,10 +73,10 @@ public struct MVector {
         switch (axis) {
             case 1:
             default:
-                return new MVector(lhs.Vector.x + rhs.Vector.x);
+                return new MVector(lhs.X + rhs.X);
 
-            case 2: return new MVector(lhs.Vector.x + rhs.Vector.x, lhs.Vector.y + rhs.Vector.y);
-            case 3: return new MVector(lhs.Vector.x + rhs.Vector.x, lhs.Vector.y + rhs.Vector.y, lhs.Vector.z + rhs.Vector.z);
+            case 2: return new MVector(lhs.X + rhs.X, lhs.Y + rhs.Y);
+            case 3: return new MVector(lhs.X + rhs.X, lhs.Y + rhs.Y, lhs.Z + rhs.Z);
             case 4: return new MVector(lhs.Vector + rhs.Vector);
         }
     }
@@ -87,20 +87,36 @@ public struct MVector {
         switch (axis) {
             case 1:
             default:
-                return new MVector(lhs.Vector.x + rhs.Vector.x);
+                return new MVector(lhs.X - rhs.X);
 
-            case 2: return new MVector(lhs.Vector.x + rhs.Vector.x, lhs.Vector.y + rhs.Vector.y);
-            case 3: return new MVector(lhs.Vector.x + rhs.Vector.x, lhs.Vector.y + rhs.Vector.y, lhs.Vector.z + rhs.Vector.z);
-            case 4: return new MVector(lhs.Vector + rhs.Vector);
+            case 2: return new MVector(lhs.X - rhs.X, lhs.Y - rhs.Y);
+            case 3: return new MVector(lhs.X - rhs.X, lhs.Y - rhs.Y, lhs.Z - rhs.Z);
+            case 4: return new MVector(lhs.Vector - rhs.Vector);
         }
     }
 
     public static MVector operator*(MVector lhs, float scale) {
-        return new MVector(lhs.Vector * scale);
+        switch (lhs.Axis) {
+            case 1:
+            default:
+                return new MVector(lhs.X * scale);
+
+            case 2: return new MVector(lhs.X * scale, lhs.Y * scale);
+            case 3: return new MVector(lhs.X * scale, lhs.Y * scale, lhs.Z * scale);
+            case 4: return new MVector(lhs.Vector * scale);
+        }
     }
 
     public static MVector operator /(MVector lhs, float scale) {
-        return new MVector(lhs.Vector / scale);
+        switch (lhs.Axis) {
+            case 1:
+            default:
+                return new MVector(lhs.X / scale);
+
+            case 2: return new MVector(lhs.X / scale, lhs.Y / scale);
+            case 3: return new MVector(lhs.X / scale, lhs.Y / scale, lhs.Z / scale);
+            case 4: return new MVector(lhs.Vector / scale);
+        }
     }
 
     public static implicit operator Vector4(MVector v) {

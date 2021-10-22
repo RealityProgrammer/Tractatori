@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.Experimental.GraphView;
+using UnityEditor;
 using UnityEditor.UIElements;
 
 public class STEditorGraphView : GraphView
@@ -29,9 +31,67 @@ public class STEditorGraphView : GraphView
         grid.StretchToParentSize();
 
         EntryNode = GenerateEntryNode();
+
         AddElement(EntryNode);
 
         NodeEmitter = new NodeEmitter();
+
+        RegisterCallback<DragEnterEvent>(HandleDragEnter);
+        RegisterCallback<DragUpdatedEvent>(HandleDragUpdated);
+        RegisterCallback<DragPerformEvent>(HandleDragPerform);
+        RegisterCallback<DragLeaveEvent>(HandleDragLeave);
+    }
+
+    private bool validate;
+    private void HandleDragEnter(DragEnterEvent evt) {
+        validate = DragAndDrop.objectReferences.Length == 1 && EditorUtility.IsPersistent(DragAndDrop.objectReferences[0]);
+    }
+
+    private void HandleDragUpdated(DragUpdatedEvent evt) {
+        if (validate) {
+            DragAndDrop.visualMode = DragAndDropVisualMode.Move;
+        } else {
+            if (DragAndDrop.GetGenericData("DragSelection") is List<ISelectable> selection && (selection.OfType<BlackboardField>().Count() >= 0)) {
+                DragAndDrop.visualMode = evt.actionKey ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Move;
+            }
+        }
+    }
+
+    private void HandleDragPerform(DragPerformEvent evt) {
+        if (validate) {
+            DragAndDrop.AcceptDrag();
+
+            var req = new ConstantNodeCreationRequest();
+            var un = ScriptableObject.CreateInstance<UnityObjectNode>();
+            un.Value = DragAndDrop.objectReferences[0];
+            req.ExistInstance = un;
+            req.Position = viewTransform.matrix.inverse.MultiplyPoint(evt.localMousePosition);
+
+            NodeEmitter.EnqueueRequest(req);
+        } else {
+            var dragSelection = DragAndDrop.GetGenericData("DragSelection");
+
+            if (dragSelection != null) {
+                var fields = dragSelection as List<ISelectable>;
+
+                foreach (BlackboardField field in fields) {
+                    var req = new ConstantNodeCreationRequest();
+                    var bp = ScriptableObject.CreateInstance<BindingPropertyNode>();
+                    bp.Name = field.text;
+                    req.ExistInstance = bp;
+                    req.Position = viewTransform.matrix.inverse.MultiplyPoint(evt.localMousePosition);
+
+                    NodeEmitter.EnqueueRequest(req);
+                }
+            }
+        }
+    }
+
+    private void HandleDragLeave(DragLeaveEvent evt) {
+        if (validate) {
+            DragAndDrop.visualMode = DragAndDropVisualMode.None;
+            validate = false;
+        }
     }
 
     public void Initialize(STGraphEditorWindow window) {

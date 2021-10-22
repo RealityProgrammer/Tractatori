@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,8 @@ public class ManipulationContainer : ScriptableObject
 {
     [field: SerializeField] public string EntrySequence { get; set; }
     [field: SerializeField] public List<BaseRuntimeNode> NodeContainer { get; set; }
+
+    [field: SerializeField] public List<ObjectBindableProperty> BindingPropertyContainer { get; set; }
 
     private string CurrentSequenceNode { get; set; }
 
@@ -64,10 +67,25 @@ public class ManipulationContainer : ScriptableObject
             return fallback;
         }
 
-        // Functional nodes don't use return value, so discard it
+        // Functional nodes don't use method with return value (only out parameter), so discard it
         var invokeReturn = node.Invoke(evaluationInfo, out _);
 
         return invokeReturn[ManipulationUtilities.FindParameterOutputIndexOutOnly(node.NodeType, input.OutputIndex)];
+    }
+
+    public BaseBindableProperty FindBindingProperty(string name) {
+        return BindingPropertyContainer.Where(x => x.Name == name).FirstOrDefault();
+    }
+
+    public bool RemoveBindingProperty(string name) {
+        for (int i = 0; i < BindingPropertyContainer.Count; i++) {
+            if (BindingPropertyContainer[i].Name == name) {
+                BindingPropertyContainer.RemoveAt(i);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private IEnumerator EvaluateCurrentSequenceNode() {

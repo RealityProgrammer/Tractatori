@@ -37,6 +37,7 @@ public class STGraphEditorWindow : EditorWindow
     private void OnEnable() {
         ConstructGraphView();
         ConstructToolbar();
+        ConstructBlackboard();
     }
 
     private void Update() {
@@ -66,6 +67,60 @@ public class STGraphEditorWindow : EditorWindow
         toolbar.Add(saveButton);
 
         rootVisualElement.Add(toolbar);
+    }
+
+    Blackboard blackboard;
+    private void ConstructBlackboard() {
+        blackboard = new Blackboard(_graphView);
+        blackboard.title = "Properties";
+        blackboard.subTitle = string.Empty;
+        blackboard.scrollable = true;
+
+        blackboard.addItemRequested += (bb) => {
+            CreateBindingProperty(new ObjectBindableProperty() { Name = Guid.NewGuid().ToString().Replace('-', '\0').Substring(0, 8), Value = null });
+        };
+        blackboard.editTextRequested += (Blackboard bb, VisualElement ve, string newValue) => {
+            var old = ((BlackboardField)ve).text;
+
+            if (CurrentEditingAsset.BindingPropertyContainer.Any(x => x.Name == newValue)) {
+                Debug.LogWarning("Binding Property with the name of \"" + newValue + "\" is already exist");
+                EditorApplication.Beep();
+                return;
+            }
+
+            var prop = CurrentEditingAsset.FindBindingProperty(old);
+            if (prop != null) {
+                prop.Name = newValue;
+                ((BlackboardField)ve).text = newValue;
+            } else {
+                Debug.LogWarning("Binding Property with the name of \"" + newValue + "\" cannot be found. This is not supposed to happen normally.");
+            }
+        };
+
+        blackboard.Add(new BlackboardSection());
+
+        _graphView.Add(blackboard);
+    }
+
+    // For now, only Binding Property with UnityEngine.Object are allowed for prototyping purpose, other properties, such as Vector will be added later
+    public void CreateBindingProperty(ObjectBindableProperty property) {
+        CurrentEditingAsset.BindingPropertyContainer.Add(property);
+
+        CreateFieldForBindingProperty(property);
+    }
+
+    void CreateFieldForBindingProperty(ObjectBindableProperty property) {
+        new PropertyBindingField(property, blackboard);
+    }
+
+    void ChangeBindingPropertyName(string from, string to) {
+        var p = CurrentEditingAsset.FindBindingProperty(from);
+
+        if (p == null) {
+            Debug.LogWarning("Cannot change binding property name from " + from + " to " + to);
+        } else {
+            p.Name = to;
+        }
     }
 
     private void SaveGraph() {
@@ -104,6 +159,10 @@ public class STGraphEditorWindow : EditorWindow
 
     private void LoadGraph() {
         Debug.Log("Loading Graph...");
+
+        foreach (var prop in CurrentEditingAsset.BindingPropertyContainer) {
+            CreateFieldForBindingProperty(prop);
+        }
 
         var container = CurrentEditingAsset.NodeContainer;
         for (int i = 0; i < container.Count; i++) {
@@ -204,18 +263,6 @@ public class STGraphEditorWindow : EditorWindow
                 STEditorUtilities.LinkPort(_graphView, _graphView.EntryNode.Q<STNodePort>("output-port"), sn.Q<STNodePort>(DynamicEditorNode.PreviousPortName));
             }
 
-            if (sn.UnderlyingSequenceNode.IsFinal) {
-                continue;
-            }
-
-            // Link the next sequence node
-            for (int j = 0; j < sequenceNodes.Count; j++) {
-                if (sn.UnderlyingSequenceNode.Next.GUID == sequenceNodes[j].UnderlyingSequenceNode.GUID) {
-                    STEditorUtilities.LinkSequenceNodes(_graphView, sequenceNodes[i], sequenceNodes[j]);
-                    break;
-                }
-            }
-
             // Link the flow inputs
             var fields = STEditorUtilities.GetAllFlowInputFields(sn.UnderlyingRuntimeNode.NodeType);
             var properties = STEditorUtilities.GetAllFlowInputProperties(sn.UnderlyingRuntimeNode.NodeType);
@@ -245,6 +292,18 @@ public class STGraphEditorWindow : EditorWindow
                     } else {
                         property.Property.SetValue(sn.UnderlyingRuntimeNode, FlowInput.Null);
                     }
+                }
+            }
+
+            if (sn.UnderlyingSequenceNode.IsFinal) {
+                continue;
+            }
+
+            // Link the next sequence node
+            for (int j = 0; j < sequenceNodes.Count; j++) {
+                if (sn.UnderlyingSequenceNode.Next.GUID == sequenceNodes[j].UnderlyingSequenceNode.GUID) {
+                    STEditorUtilities.LinkSequenceNodes(_graphView, sequenceNodes[i], sequenceNodes[j]);
+                    break;
                 }
             }
         }
