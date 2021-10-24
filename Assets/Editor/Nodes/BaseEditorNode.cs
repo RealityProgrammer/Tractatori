@@ -36,7 +36,7 @@ public class BaseEditorNode : Node
         return fallbackColor;
     }
 
-    public bool EntryPoint { get; set; }
+    public bool IsEntryPoint { get; set; }
 
     public BaseRuntimeNode UnderlyingRuntimeNode { get; set; }
 

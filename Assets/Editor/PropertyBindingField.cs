@@ -1,5 +1,6 @@
 ﻿using System.Linq;
-using System.Collections;
+using System;
+using System.Reflection;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,25 +10,45 @@ using UnityEditor.Experimental.GraphView;
 
 public class PropertyBindingField
 {
+    private static Dictionary<Type, Type> _drawerDictionary;
+    private static readonly Action<BaseBindablePropertyDrawer, PropertyBindingField> ParentAssign;
+
+    static PropertyBindingField() {
+        ParentAssign = (Action<BaseBindablePropertyDrawer, PropertyBindingField>)typeof(BaseBindablePropertyDrawer).GetProperty("Parent", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).GetSetMethod(true).CreateDelegate(typeof(Action<BaseBindablePropertyDrawer, PropertyBindingField>));
+
+        _drawerDictionary = new Dictionary<Type, Type>();
+
+        var drawers = TypeCache.GetTypesDerivedFrom<BaseBindablePropertyDrawer>();
+        foreach (var drawer in drawers) {
+            var attribute = drawer.GetCustomAttribute<BindablePropertyDrawerOfAttribute>();
+
+            if (attribute == null) {
+                Debug.LogWarning("A drawer of Bindable Property without [BindablePropertyDrawerOf] attribute discovered: " + drawer.AssemblyQualifiedName);
+            } else {
+                if (_drawerDictionary.TryGetValue(attribute.Target, out var t)) {
+                    Debug.LogWarning("A drawer for Bindable Property type \"" + attribute.Target.AssemblyQualifiedName + "\" is already exists.");
+                } else {
+                    _drawerDictionary.Add(attribute.Target, drawer);
+                }
+            }
+        }
+    }
+
     public static readonly string GenericName = "ObjectBindingDrop";
 
     public VisualElement Container { get; private set; }
     public BlackboardRow Row { get; private set; }
     public BlackboardField Field { get; private set; }
-    public ObjectBindableProperty Property { get; private set; }
+    public BaseBindableProperty Property { get; private set; }
 
-    public enum DraggingState {
-        Rest, Ready, Dragging
-    }
-
-    public PropertyBindingField(ObjectBindableProperty property, Blackboard blackboard) {
+    public PropertyBindingField(BaseBindableProperty property, Blackboard blackboard) {
         Property = property;
 
         Container = new VisualElement();
 
         Field = new BlackboardField {
             text = property.Name,
-            typeText = property.Value == null ? "Null" : property.Value.GetType().FullName,
+            // typeText = property.Value == null ? "Null" : property.Value.GetType().FullName,
         };
         Field.RegisterCallback<DetachFromPanelEvent>(DestroyCallback);
 
@@ -38,23 +59,13 @@ public class PropertyBindingField
         var dataContainer = new VisualElement();
         dataContainer.name = "property-container";
 
-        var objectField = new ObjectField("Object");
-        objectField.objectType = typeof(Object);
-        objectField.allowSceneObjects = false;
-        objectField.SetValueWithoutNotify(property.Value);
+        var propertyType = Property.GetType();
+        if (_drawerDictionary.TryGetValue(propertyType, out Type drawer)) {
+            BaseBindablePropertyDrawer drawerInstance = Activator.CreateInstance(drawer) as BaseBindablePropertyDrawer;
 
-        objectField.RegisterValueChangedCallback((obj) => {
-            Property.Value = obj.newValue;
-            Field.typeText = obj.newValue == null ? "Null" : obj.newValue.GetType().FullName;
-        });
-
-        var label = objectField.Q<Label>(className: "unity-label").style;
-        label.width = new Length(20, LengthUnit.Percent);
-        label.minWidth = StyleKeyword.Auto;
-
-        objectField.Q<Label>(className: "unity-object-field-display__label").style.width = 0;
-
-        dataContainer.Add(objectField);
+            ParentAssign(drawerInstance, this);
+            drawerInstance.Initialize(dataContainer);
+        }
 
         var row = new BlackboardRow(Field, dataContainer);
 
@@ -62,9 +73,32 @@ public class PropertyBindingField
         Container.Add(row);
 
         blackboard.Add(Container);
+
+        Field.AddManipulator(new ContextualMenuManipulator(ContexualMenu));
+    }
+
+    void ContexualMenu(ContextualMenuPopulateEvent evt) {
+        evt.menu.AppendAction("Delete", (action) => {
+            switch (STGraphEditorWindow.WindowInstance.BlackboardWrapper.Displaying) {
+                case TBlackboardWrapper.DisplayingSection.Object:
+                    STGraphEditorWindow.CurrentEditingAsset.ObjectBindableProperties.Remove(Property as ObjectBindableProperty);
+                    break;
+
+                case TBlackboardWrapper.DisplayingSection.Vector:
+                    STGraphEditorWindow.CurrentEditingAsset.VectorBindableProperties.Remove(Property as MVectorBindableProperty);
+                    break;
+            }
+
+            Field.RemoveFromHierarchy();
+        });
     }
 
     void RegisterCallbacks() {
+        Field.RegisterCallback<KeyDownEvent>((evt) => {
+            if (evt.keyCode == KeyCode.Delete) {
+                Debug.Log("Aeugh");
+            }
+        });
     }
 
     void DestroyCallback(DetachFromPanelEvent evt) {

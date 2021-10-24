@@ -121,8 +121,6 @@ public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider {
     }
 
     public bool OnSelectEntry(SearchTreeEntry SearchTreeEntry, SearchWindowContext context) {
-        Debug.Log("context.screenMousePosition: " + context.screenMousePosition);
-
         var worldMousePosition = _window.rootVisualElement.ChangeCoordinatesTo(_window.rootVisualElement.parent, context.screenMousePosition - _window.position.position);
         var localMousePosition = _graphView.contentViewContainer.WorldToLocal(worldMousePosition);
 

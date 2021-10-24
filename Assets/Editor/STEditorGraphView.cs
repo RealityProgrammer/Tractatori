@@ -40,13 +40,54 @@ public class STEditorGraphView : GraphView
         RegisterCallback<DragUpdatedEvent>(HandleDragUpdated);
         RegisterCallback<DragPerformEvent>(HandleDragPerform);
         RegisterCallback<DragLeaveEvent>(HandleDragLeave);
+
+        graphViewChanged = OnGraphChange;
+    }
+
+    private GraphViewChange OnGraphChange(GraphViewChange change) {
+        if (change.elementsToRemove != null) {
+            // If node get deleted, edge will be deleted first, then the node itself. So... we only need to process the edge
+
+            foreach (GraphElement ge in change.elementsToRemove) {
+                // 1 case here, if anything is added in the future, I don't have to reformat it
+                switch (ge) {
+                    case Edge edge:
+                        var inputNode = edge.input.node as BaseEditorNode;
+                        var outputNode = edge.output.node as BaseEditorNode;
+
+                        if (inputNode == null || outputNode == null) break; // Guard check
+
+                        if (outputNode.IsEntryPoint) {
+                            STGraphEditorWindow.CurrentEditingAsset.EntrySequence = Guid.Empty.ToString();
+                        } else {
+                            var name = edge.input.name;
+                            Debug.Log(inputNode.UnderlyingRuntimeNode.NodeType.FullName);
+
+                            var field = STEditorUtilities.GetAllFlowInputFields(inputNode.UnderlyingRuntimeNode.NodeType).Where(x => x.Name == name).FirstOrDefault();
+                            if (field != null) {
+                                field.SetValue(inputNode.UnderlyingRuntimeNode, FlowInput.Null);
+                            } else {
+                                var property = STEditorUtilities.GetAllFlowInputProperties(inputNode.UnderlyingRuntimeNode.NodeType).Where(x => x.Property.Name == name).FirstOrDefault();
+
+                                if (property != null) {
+                                    property.Property.SetValue(inputNode.UnderlyingRuntimeNode, FlowInput.Null);
+                                } else {
+                                    Debug.Log("If you see this message. Report issue and send the container data.");
+                                }
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+        return change;
     }
 
     private bool validate;
     private void HandleDragEnter(DragEnterEvent evt) {
-        validate = DragAndDrop.objectReferences.Length == 1 && EditorUtility.IsPersistent(DragAndDrop.objectReferences[0]);
+        validate = DragAndDrop.objectReferences.Length == 1 && EditorUtility.IsPersistent(DragAndDrop.objectReferences[0]) && AssetDatabase.GetAssetPath(DragAndDrop.objectReferences[0]).StartsWith("Assets/Resources/");
     }
-
     private void HandleDragUpdated(DragUpdatedEvent evt) {
         if (validate) {
             DragAndDrop.visualMode = DragAndDropVisualMode.Move;
@@ -56,7 +97,6 @@ public class STEditorGraphView : GraphView
             }
         }
     }
-
     private void HandleDragPerform(DragPerformEvent evt) {
         if (validate) {
             DragAndDrop.AcceptDrag();
@@ -72,21 +112,35 @@ public class STEditorGraphView : GraphView
             var dragSelection = DragAndDrop.GetGenericData("DragSelection");
 
             if (dragSelection != null) {
-                var fields = dragSelection as List<ISelectable>;
+                var selectables = dragSelection as List<ISelectable>;
+                var fields = selectables.OfType<BlackboardField>();
 
+                int i = 0;
                 foreach (BlackboardField field in fields) {
                     var req = new ConstantNodeCreationRequest();
-                    var bp = ScriptableObject.CreateInstance<BindingPropertyNode>();
-                    bp.Name = field.text;
-                    req.ExistInstance = bp;
-                    req.Position = viewTransform.matrix.inverse.MultiplyPoint(evt.localMousePosition);
+                    BaseBindablePropertyNode nodeInstance = null;
+
+                    switch ((string)field.userData) {
+                        case STGraphEditorWindow.ObjectBindablePropertyUserData:
+                            nodeInstance = ScriptableObject.CreateInstance<ObjectBindablePropertyNode>();
+                            break;
+
+                        case STGraphEditorWindow.VectorBindablePropertyUserData:
+                            nodeInstance = ScriptableObject.CreateInstance<VectorBindablePropertyNode>();
+                            break;
+                    }
+
+                    nodeInstance.Name = field.text;
+                    req.ExistInstance = nodeInstance;
+                    req.Position = viewTransform.matrix.inverse.MultiplyPoint(evt.localMousePosition) + i * 10 * Vector3.one;
 
                     NodeEmitter.EnqueueRequest(req);
+
+                    i++;
                 }
             }
         }
     }
-
     private void HandleDragLeave(DragLeaveEvent evt) {
         if (validate) {
             DragAndDrop.visualMode = DragAndDropVisualMode.None;
@@ -133,7 +187,7 @@ public class STEditorGraphView : GraphView
     BaseEditorNode GenerateEntryNode() {
         var node = new BaseEditorNode() {
             title = "Entry Node",
-            EntryPoint = true,
+            IsEntryPoint = true,
         };
 
         var port = node.GeneratePort(Direction.Output, Port.Capacity.Single, typeof(BaseSequenceNode)); // Float type as placeholder
@@ -142,6 +196,7 @@ public class STEditorGraphView : GraphView
         port.ConnectionCallback.OnDropCallback += (GraphView graphView, Edge edge) => {
             STGraphEditorWindow.CurrentEditingAsset.EntrySequence = ((BaseEditorNode)edge.input.node).UnderlyingRuntimeNode.GUID;
         };
+
         node.outputContainer.Add(port);
 
         node.capabilities &= ~Capabilities.Collapsible;

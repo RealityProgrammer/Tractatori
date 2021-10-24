@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections;
+using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -20,23 +21,39 @@ public abstract class NodeCreationRequest {
 }
 
 public class ConstantNodeCreationRequest : NodeCreationRequest {
-    private static readonly Dictionary<Type, Func<ConstantNodeCreationRequest, BaseEditorNode>> _constantNodeCreation = new Dictionary<Type, Func<ConstantNodeCreationRequest, BaseEditorNode>>() {
-        [typeof(VectorValueNode)] = (creation) => new EditorVectorValueNode(ScriptableObject.CreateInstance(creation.UnderlyingNodeType) as VectorValueNode),
-        [typeof(StringValueNode)] = (creation) => new EditorStringValueNode(ScriptableObject.CreateInstance(creation.UnderlyingNodeType) as StringValueNode),
-    };
+    private static readonly Type ConstantInterfaceType = typeof(IConstantValueNode);
+    private static readonly Dictionary<Type, Type> _editorDictionary;
+    static ConstantNodeCreationRequest() {
+        _editorDictionary = new Dictionary<Type, Type>();
 
-    private static readonly Dictionary<Type, Func<ConstantNodeCreationRequest, BaseEditorNode>> _constantNodeCreationExists = new Dictionary<Type, Func<ConstantNodeCreationRequest, BaseEditorNode>>() {
-        [typeof(VectorValueNode)] = (creation) => new EditorVectorValueNode(creation.ExistInstance as VectorValueNode),
-        [typeof(StringValueNode)] = (creation) => new EditorStringValueNode(creation.ExistInstance as StringValueNode),
-        [typeof(UnityObjectNode)] = (creation) => new EditorUnityObjectNode(creation.ExistInstance as UnityObjectNode),
-        [typeof(BindingPropertyNode)] = (creation) => new EditorBindingPropertyNode(creation.ExistInstance as BindingPropertyNode),
-    };
+        var cache = TypeCache.GetTypesDerivedFrom<BaseEditorConstantNode>();
+        foreach (var type in cache) {
+            var attr = type.GetCustomAttribute<DrawerForConstantNodeAttribute>();
+
+            if (attr == null) {
+                Debug.LogWarning("An editor type derived from BaseEditorConstantNode but without attribute [DrawerForConstantNode] detected: " + type.FullName);
+            } else {
+                if (_editorDictionary.TryGetValue(attr.RuntimeType, out var drawer)) {
+                    Debug.LogWarning($"Constant node type {attr.RuntimeType.FullName} already has a drawer type of {drawer.FullName}");
+                } else {
+                    if (attr.RuntimeType.GetInterfaces().Contains(ConstantInterfaceType)) {
+                        _editorDictionary.Add(attr.RuntimeType, type);
+                    } else {
+                        Debug.Log($"An editor type derived from BaseEditorConstantNode with attribute [DrawerForConstantNode] target to non-constant node type. Drawer type {drawer.FullName} targeted {attr.RuntimeType.FullName}");
+                    }
+                }
+            }
+        }
+    }
 
     public override NodeCreationResult Handle() {
         if (ExistInstance == null) {
-            if (_constantNodeCreation.TryGetValue(UnderlyingNodeType, out var @delegate)) {
+            if (_editorDictionary.TryGetValue(UnderlyingNodeType, out var drawer)) {
+                var editor = Activator.CreateInstance(drawer) as BaseEditorConstantNode;
+                editor.UnderlyingRuntimeNode = ScriptableObject.CreateInstance(UnderlyingNodeType) as BaseRuntimeNode;
+
                 NodeCreationResult result = new NodeCreationResult() {
-                    Output = @delegate.Invoke(this),
+                    Output = editor,
                     Result = true,
                     Request = this,
                 };
@@ -44,9 +61,12 @@ public class ConstantNodeCreationRequest : NodeCreationRequest {
                 return result;
             }
         } else {
-            if (_constantNodeCreationExists.TryGetValue(ExistInstance.NodeType, out var @delegate)) {
+            if (_editorDictionary.TryGetValue(ExistInstance.NodeType, out var drawer)) {
+                var editor = Activator.CreateInstance(drawer) as BaseEditorConstantNode;
+                editor.UnderlyingRuntimeNode = ExistInstance;
+
                 NodeCreationResult result = new NodeCreationResult() {
-                    Output = @delegate.Invoke(this),
+                    Output = editor,
                     Result = true,
                     Request = this,
                 };

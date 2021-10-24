@@ -1,17 +1,15 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using UnityEditor;
 
+[DrawerForConstantNode(typeof(UnityObjectNode))]
 public class EditorUnityObjectNode : BaseEditorConstantNode
 {
     public ObjectField Field { get; private set; }
-
-    public EditorUnityObjectNode(UnityObjectNode node) : base() {
-        UnderlyingRuntimeNode = node;
-    }
 
     public override void Initialize() {
         title = "Unity Object Node";
@@ -29,6 +27,9 @@ public class EditorUnityObjectNode : BaseEditorConstantNode
             Field.SetValueWithoutNotify(value);
 
             Field.RegisterValueChangedCallback(ObjectFieldModifyCallback);
+            Field.RegisterCallback<DragUpdatedEvent>((evt) => {
+                DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+            });
 
             Field.Q(className: "unity-object-field-display").style.maxWidth = new Length(175, LengthUnit.Pixel);
 
@@ -41,6 +42,9 @@ public class EditorUnityObjectNode : BaseEditorConstantNode
             Field.allowSceneObjects = false;
 
             Field.RegisterValueChangedCallback(ObjectFieldModifyCallback);
+            Field.RegisterCallback<DragUpdatedEvent>((evt) => {
+                DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+            });
 
             Field.Q(className: "unity-object-field-display").style.maxWidth = new Length(175, LengthUnit.Pixel);
 
@@ -48,15 +52,15 @@ public class EditorUnityObjectNode : BaseEditorConstantNode
         }
     }
 
-    void ObjectFieldModifyCallback(ChangeEvent<Object> evt) {
+    void ObjectFieldModifyCallback(ChangeEvent<UnityEngine.Object> evt) {
         ((UnityObjectNode)UnderlyingRuntimeNode).Value = evt.newValue;
         DeleteDetecting.Change(this, evt);
     }
 
     private class DeleteDetecting : UnityEditor.AssetModificationProcessor {
-        public static Dictionary<UnityEngine.Object, List<EditorUnityObjectNode>> SubscriptionList { get; private set; } = new Dictionary<Object, List<EditorUnityObjectNode>>();
+        public static Dictionary<UnityEngine.Object, List<EditorUnityObjectNode>> SubscriptionList { get; private set; } = new Dictionary<UnityEngine.Object, List<EditorUnityObjectNode>>();
 
-        private static List<EditorUnityObjectNode> EnsureListNotNull(Object asset) {
+        private static List<EditorUnityObjectNode> EnsureListNotNull(UnityEngine.Object asset) {
             if (SubscriptionList.TryGetValue(asset, out var l)) {
                 return l;
             } else {
@@ -73,7 +77,7 @@ public class EditorUnityObjectNode : BaseEditorConstantNode
             EnsureListNotNull(asset).Add(node);
         }
 
-        public static void Change(EditorUnityObjectNode node, ChangeEvent<Object> change) {
+        public static void Change(EditorUnityObjectNode node, ChangeEvent<UnityEngine.Object> change) {
             if (change.previousValue != null) {
                 EnsureListNotNull(change.previousValue).Remove(node);
             }
@@ -82,7 +86,7 @@ public class EditorUnityObjectNode : BaseEditorConstantNode
         }
 
         static AssetDeleteResult OnWillDeleteAsset(string path, RemoveAssetOptions opt) {
-            var asset = AssetDatabase.LoadAssetAtPath<Object>(path);
+            var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path);
 
             if (SubscriptionList.TryGetValue(asset, out var list)) {
                 foreach (var node in list) {

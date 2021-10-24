@@ -6,11 +6,8 @@ using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.UIElements;
 
+[DrawerForConstantNode(typeof(VectorValueNode))]
 public class EditorVectorValueNode : BaseEditorConstantNode {
-    public EditorVectorValueNode(VectorValueNode node) : base() {
-        UnderlyingRuntimeNode = node;
-    }
-
     public override void Initialize() {
         title = "Vector Constant Node";
 

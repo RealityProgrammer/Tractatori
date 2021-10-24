@@ -114,7 +114,7 @@ public static class STEditorUtilities {
     }
 
     public static void LinkSequenceNodes(STEditorGraphView graphView, DynamicEditorSequenceNode input, DynamicEditorSequenceNode output) {
-        LinkPort(graphView, input.Q<STNodePort>(DynamicEditorSequenceNode.NextPortName), output.Q<STNodePort>(DynamicEditorSequenceNode.PreviousPortName));
+        LinkPort(graphView, input.Q<STNodePort>(DynamicEditorNode.NextPortName), output.Q<STNodePort>(DynamicEditorSequenceNode.PreviousPortName));
     }
 
     public static void LinkPort(STEditorGraphView graphView, STNodePort output, STNodePort input) {

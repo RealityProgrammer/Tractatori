@@ -11,17 +11,26 @@ using UnityEngine.UIElements;
 
 public class STGraphEditorWindow : EditorWindow
 {
+    public const string ObjectBindablePropertyUserData = "Object";
+    public const string VectorBindablePropertyUserData = "Vector";
+
     private STEditorGraphView _graphView;
+
+    public static ManipulationContainer OriginalAsset { get; private set; }
     public static ManipulationContainer CurrentEditingAsset { get; private set; }
+
+    public static bool HasUnsavedChanges { get; private set; } = true;
+    public static STGraphEditorWindow WindowInstance { get; private set; }
 
     [OnOpenAsset(1)]
     public static bool OnOpenAsset(int instanceID, int line) {
         if (Selection.activeObject is ManipulationContainer container) {
             if (!HasOpenInstances<STGraphEditorWindow>()) {
-                var window = GetWindow<STGraphEditorWindow>("Story Tailor Graph");
+                WindowInstance = GetWindow<STGraphEditorWindow>("Story Tailor Graph");
 
-                CurrentEditingAsset = container;
-                window.LoadGraph();
+                OriginalAsset = container;
+                CurrentEditingAsset = Instantiate(container);
+                WindowInstance.LoadGraph();
 
                 return true;
             } else {
@@ -69,82 +78,39 @@ public class STGraphEditorWindow : EditorWindow
         rootVisualElement.Add(toolbar);
     }
 
-    Blackboard blackboard;
+    public TBlackboardWrapper BlackboardWrapper { get; private set; }
     private void ConstructBlackboard() {
-        blackboard = new Blackboard(_graphView);
-        blackboard.title = "Properties";
-        blackboard.subTitle = string.Empty;
-        blackboard.scrollable = true;
-
-        blackboard.addItemRequested += (bb) => {
-            CreateBindingProperty(new ObjectBindableProperty() { Name = Guid.NewGuid().ToString().Replace('-', '\0').Substring(0, 8), Value = null });
-        };
-        blackboard.editTextRequested += (Blackboard bb, VisualElement ve, string newValue) => {
-            var old = ((BlackboardField)ve).text;
-
-            if (CurrentEditingAsset.BindingPropertyContainer.Any(x => x.Name == newValue)) {
-                Debug.LogWarning("Binding Property with the name of \"" + newValue + "\" is already exist");
-                EditorApplication.Beep();
-                return;
-            }
-
-            var prop = CurrentEditingAsset.FindBindingProperty(old);
-            if (prop != null) {
-                prop.Name = newValue;
-                ((BlackboardField)ve).text = newValue;
-            } else {
-                Debug.LogWarning("Binding Property with the name of \"" + newValue + "\" cannot be found. This is not supposed to happen normally.");
-            }
-        };
-
-        blackboard.Add(new BlackboardSection());
-
-        _graphView.Add(blackboard);
+        BlackboardWrapper = new TBlackboardWrapper(_graphView, this);
     }
 
-    // For now, only Binding Property with UnityEngine.Object are allowed for prototyping purpose, other properties, such as Vector will be added later
-    public void CreateBindingProperty(ObjectBindableProperty property) {
-        CurrentEditingAsset.BindingPropertyContainer.Add(property);
+    public void CreateObjectBindableProperty(ObjectBindableProperty property) {
+        CurrentEditingAsset.ObjectBindableProperties.Add(property);
 
-        CreateFieldForBindingProperty(property);
+        CreateFieldForBindableProperty(property).Field.userData = ObjectBindablePropertyUserData;
     }
 
-    void CreateFieldForBindingProperty(ObjectBindableProperty property) {
-        new PropertyBindingField(property, blackboard);
+    public void CreateVectorBindableProperty(MVectorBindableProperty property) {
+        CurrentEditingAsset.VectorBindableProperties.Add(property);
+
+        CreateFieldForBindableProperty(property).Field.userData = VectorBindablePropertyUserData;
     }
 
-    void ChangeBindingPropertyName(string from, string to) {
-        var p = CurrentEditingAsset.FindBindingProperty(from);
-
-        if (p == null) {
-            Debug.LogWarning("Cannot change binding property name from " + from + " to " + to);
-        } else {
-            p.Name = to;
-        }
+    public PropertyBindingField CreateFieldForBindableProperty(BaseBindableProperty property) {
+        return new PropertyBindingField(property, BlackboardWrapper.Blackboard);
     }
 
     private void SaveGraph() {
         List<Node> nodes = new List<Node>();
         _graphView.nodes.ToList(nodes);
 
-        string assetPath = AssetDatabase.GetAssetPath(CurrentEditingAsset);
-
-        var oldAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
-        foreach (var oldAsset in oldAssets) {
-            if (oldAsset is BaseRuntimeNode) {
-                AssetDatabase.RemoveObjectFromAsset(oldAsset);
-            }
-        }
-
         CurrentEditingAsset.NodeContainer.Clear();
-        CurrentEditingAsset.NodeContainer.Capacity = nodes.Count - 1; // Minus one because one entry node exists
+        CurrentEditingAsset.NodeContainer.Capacity = nodes.Count - 1;
 
         foreach (var node in nodes) {
             if (node is BaseEditorNode editorNode) {
-                if (!editorNode.EntryPoint) {
+                if (!editorNode.IsEntryPoint) {
                     editorNode.UnderlyingRuntimeNode.NodePosition = editorNode.GetPosition().position;
                     editorNode.UnderlyingRuntimeNode.name = editorNode.UnderlyingRuntimeNode.GUID;
-                    AssetDatabase.AddObjectToAsset(editorNode.UnderlyingRuntimeNode, CurrentEditingAsset);
 
                     CurrentEditingAsset.NodeContainer.Add(editorNode.UnderlyingRuntimeNode);
                 }
@@ -153,16 +119,28 @@ public class STGraphEditorWindow : EditorWindow
             }
         }
 
+        string assetPath = AssetDatabase.GetAssetPath(OriginalAsset);
+
+        EditorUtility.CopySerialized(CurrentEditingAsset, OriginalAsset);
+
+        var oldAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+        foreach (var oldAsset in oldAssets) {
+            if (oldAsset is BaseRuntimeNode) {
+                AssetDatabase.RemoveObjectFromAsset(oldAsset);
+            }
+        }
+
+        for (int i = 0; i < OriginalAsset.NodeContainer.Count; i++) {
+            AssetDatabase.AddObjectToAsset(OriginalAsset.NodeContainer[i], assetPath);
+        }
+
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
     }
-
     private void LoadGraph() {
         Debug.Log("Loading Graph...");
 
-        foreach (var prop in CurrentEditingAsset.BindingPropertyContainer) {
-            CreateFieldForBindingProperty(prop);
-        }
+        BlackboardWrapper.GenerateFields();
 
         var container = CurrentEditingAsset.NodeContainer;
         for (int i = 0; i < container.Count; i++) {
@@ -184,6 +162,8 @@ public class STGraphEditorWindow : EditorWindow
                     break;
 
                 default:
+                    if (runtimeNode == null) break;
+
                     _graphView.NodeEmitter.EnqueueRequest(new FunctionalNodeCreationRequest() {
                         ExistInstance = runtimeNode,
                         Position = runtimeNode.NodePosition,
@@ -196,10 +176,10 @@ public class STGraphEditorWindow : EditorWindow
 
         var nodes = _graphView.nodes.ToList().Cast<BaseEditorNode>().ToList(); // Shut up, I use Linq for prototyping
         var sequenceNodes = nodes.Where(x => x is DynamicEditorSequenceNode).Cast<DynamicEditorSequenceNode>().ToList();
-        var nonSequenceNodes = nodes.Where(x => !x.EntryPoint && !(x is DynamicEditorSequenceNode)).ToList();
+        var nonSequenceNodes = nodes.Where(x => !x.IsEntryPoint && !(x is DynamicEditorSequenceNode)).ToList();
 
         foreach (var node in nonSequenceNodes) {
-            if (node.EntryPoint) continue;
+            if (node.IsEntryPoint) continue;
             if (node.UnderlyingRuntimeNode == null) {
                 Debug.LogWarning("An editor node with null runtime node discovered. This shouldn't happened.");
                 continue;
@@ -246,7 +226,7 @@ public class STGraphEditorWindow : EditorWindow
 
     BaseEditorNode FindEditorNode<T>(List<T> allNodes, string guid) where T : BaseEditorNode {
         for (int i = 0; i < allNodes.Count; i++) {
-            if (allNodes[i].EntryPoint) continue;
+            if (allNodes[i].IsEntryPoint) continue;
 
             if (allNodes[i].UnderlyingRuntimeNode.GUID == guid) return allNodes[i];
         }

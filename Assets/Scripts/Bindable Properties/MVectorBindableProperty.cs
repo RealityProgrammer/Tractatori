@@ -5,7 +5,7 @@ using UnityEngine;
 [Serializable]
 [BindingPropertyType(typeof(MVector))]
 public class MVectorBindableProperty : BaseBindableProperty {
-    public MVector Value { get; set; }
+    [field: SerializeField] public MVector Value { get; set; }
 
     public override object GetValue() {
         return Value;

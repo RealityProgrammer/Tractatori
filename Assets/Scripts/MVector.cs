@@ -123,6 +123,10 @@ public struct MVector {
         return v.Vector;
     }
 
+    public static explicit operator MVector(Vector4 v) {
+        return new MVector(v);
+    }
+
     public static MVector ConvertFrom(Vector4 v, int axisCount) {
         switch (axisCount) {
             case 1:

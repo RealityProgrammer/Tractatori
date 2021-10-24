@@ -9,7 +9,15 @@ public class ManipulationContainer : ScriptableObject
     [field: SerializeField] public string EntrySequence { get; set; }
     [field: SerializeField] public List<BaseRuntimeNode> NodeContainer { get; set; }
 
-    [field: SerializeField] public List<ObjectBindableProperty> BindingPropertyContainer { get; set; }
+    #region Bindable Properties
+    [field: SerializeField] public List<ObjectBindableProperty> ObjectBindableProperties { get; set; }
+    [field: SerializeField] public List<MVectorBindableProperty> VectorBindableProperties { get; set; }
+    #endregion
+
+    #region Override Bindable Properties
+    [HideInInspector] public List<ObjectBindableProperty> OverrideObjectBindableProperties { get; set; }
+    [HideInInspector] public List<MVectorBindableProperty> OverrideVectorBindableProperties { get; set; }
+    #endregion
 
     private string CurrentSequenceNode { get; set; }
 
@@ -18,6 +26,9 @@ public class ManipulationContainer : ScriptableObject
         NodeContainer = new List<BaseRuntimeNode>();
 
         evaluationInfo = new NodeEvaluationInfo(this);
+
+        OverrideObjectBindableProperties = new List<ObjectBindableProperty>();
+        OverrideVectorBindableProperties = new List<MVectorBindableProperty>();
     }
 
     public BaseRuntimeNode FindNode(string guid) {
@@ -73,14 +84,36 @@ public class ManipulationContainer : ScriptableObject
         return invokeReturn[ManipulationUtilities.FindParameterOutputIndexOutOnly(node.NodeType, input.OutputIndex)];
     }
 
-    public BaseBindableProperty FindBindingProperty(string name) {
-        return BindingPropertyContainer.Where(x => x.Name == name).FirstOrDefault();
+    public ObjectBindableProperty FindObjectBindableProperty(string name) {
+        return FindProperty(ObjectBindableProperties, OverrideObjectBindableProperties, name);
+    }
+
+    public MVectorBindableProperty FindVectorBindableProperty(string name) {
+        return FindProperty(VectorBindableProperties, OverrideVectorBindableProperties, name);
+    }
+
+    public T FindProperty<T>(List<T> properties, List<T> overrideProperties, string name) where T : BaseBindableProperty {
+        var original = properties.Where(x => x.Name == name).FirstOrDefault();
+        if (original == null) {
+            return null;
+        }
+
+        var @override = overrideProperties.Where(x => x.Name == name).FirstOrDefault();
+        if (@override != null) {
+            return @override;
+        }
+
+        return original;
+    }
+
+    public T FindRawProperty<T>(List<T> properties, string name) where T : BaseBindableProperty {
+        return properties.Where(x => x.Name == name).FirstOrDefault();
     }
 
     public bool RemoveBindingProperty(string name) {
-        for (int i = 0; i < BindingPropertyContainer.Count; i++) {
-            if (BindingPropertyContainer[i].Name == name) {
-                BindingPropertyContainer.RemoveAt(i);
+        for (int i = 0; i < ObjectBindableProperties.Count; i++) {
+            if (ObjectBindableProperties[i].Name == name) {
+                ObjectBindableProperties.RemoveAt(i);
                 return true;
             }
         }
