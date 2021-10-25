@@ -28,45 +28,20 @@ public class DynamicEditorNode : BaseEditorNode {
         contentContainer.Q("contents").Q("top").Q("output").style.backgroundColor = Color.clear;
         contentContainer.Q("contents").style.backgroundColor = (Color)new Color32(46, 46, 46, 205);
 
-        var fields = STEditorUtilities.GetAllFlowInputFields(UnderlyingRuntimeNode.NodeType);
-        var properties = STEditorUtilities.GetAllFlowInputProperties(UnderlyingRuntimeNode.NodeType);
+        foreach (var property in TractatoriEditorUtility.GetAllFlowInputs(UnderlyingRuntimeNode.NodeType)) {
+            var expectedTypeAttribute = property.GetAttribute<ExpectedInputTypeAttribute>();
 
-        foreach (var field in fields) {
-            var expectedTypeAttribute = field.GetCustomAttribute<ExpectedInputTypeAttribute>();
             var expectedType = expectedTypeAttribute == null ? objectType : expectedTypeAttribute.Expected;
 
             var port = GeneratePort(Direction.Input, Port.Capacity.Single, expectedType);
-            port.portName = ObjectNames.NicifyVariableName(field.Name);
-            port.name = field.Name;
+            port.portName = ObjectNames.NicifyVariableName(property.Name);
+            port.name = property.Name;
 
             var callback = new NodeConnectionCallback() {
                 OnDropCallback = (graphView, edge) => {
                     var output = edge.output.node as BaseEditorNode;
 
-                    field.SetValue(UnderlyingRuntimeNode, output.UnderlyingRuntimeNode.GUID);
-                }
-            };
-
-            port.AddManipulator(new EdgeConnector<Edge>(callback));
-            inputContainer.Add(port);
-        }
-
-        foreach (var property in properties) {
-            var expectedTypeAttribute = property.BackingField.GetCustomAttribute<ExpectedInputTypeAttribute>();
-            var expectedType = expectedTypeAttribute == null ? objectType : expectedTypeAttribute.Expected;
-
-            var port = GeneratePort(Direction.Input, Port.Capacity.Single, expectedType);
-            port.portName = ObjectNames.NicifyVariableName(property.Property.Name);
-            port.name = property.Property.Name;
-
-            var callback = new NodeConnectionCallback() {
-                OnDropCallback = (graphView, edge) => {
-                    var output = edge.output.node as BaseEditorNode;
-
-                    property.Property.SetValue(UnderlyingRuntimeNode, output.UnderlyingRuntimeNode.GUID);
-                    property.CallbackMethod.Invoke(UnderlyingRuntimeNode, null);
-
-                    Debug.Log("Callback Time boi");
+                    property.SetValue(UnderlyingRuntimeNode, output.UnderlyingRuntimeNode.GUID);
                 }
             };
 
@@ -94,17 +69,11 @@ public class DynamicEditorNode : BaseEditorNode {
                         var output = edge.output.node as BaseEditorNode;
                         var input = edge.input.node as BaseEditorNode;
 
-                        var field = STEditorUtilities.GetAllFlowInputFields(input.UnderlyingRuntimeNode.NodeType).Where(x => x.Name == edge.input.name).FirstOrDefault();
-                        if (field != null) {
-                            field.SetValue(input.UnderlyingRuntimeNode, new FlowInput(output.UnderlyingRuntimeNode.GUID, port.OutputIndex));
+                        var property = TractatoriEditorUtility.GetAllFlowInputs(input.UnderlyingRuntimeNode.NodeType).Where(x => x.Name == name).FirstOrDefault();
+                        if (property != null) {
+                            property.SetValue(input.UnderlyingRuntimeNode, new FlowInput(output.UnderlyingRuntimeNode.GUID, port.OutputIndex));
                         } else {
-                            var property = STEditorUtilities.GetAllFlowInputProperties(input.UnderlyingRuntimeNode.NodeType).Where(x => x.Property.Name == edge.input.name).FirstOrDefault();
-
-                            if (property != null) {
-                                property.Property.SetValue(input.UnderlyingRuntimeNode, new FlowInput(output.UnderlyingRuntimeNode.GUID, port.OutputIndex));
-                            } else {
-                                Debug.LogWarning("Erm...");
-                            }
+                            Debug.LogWarning("Something went wrong while connecting Editor Node.");
                         }
                     }
                 };

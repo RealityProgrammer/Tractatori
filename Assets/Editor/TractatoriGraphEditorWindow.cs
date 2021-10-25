@@ -9,24 +9,24 @@ using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-public class STGraphEditorWindow : EditorWindow
+public class TractatoriGraphEditorWindow : EditorWindow
 {
     public const string ObjectBindablePropertyUserData = "Object";
     public const string VectorBindablePropertyUserData = "Vector";
 
-    private STEditorGraphView _graphView;
+    private TractatoriGraphView _graphView;
 
     public static ManipulationContainer OriginalAsset { get; private set; }
     public static ManipulationContainer CurrentEditingAsset { get; private set; }
 
     public static bool HasUnsavedChanges { get; private set; } = true;
-    public static STGraphEditorWindow WindowInstance { get; private set; }
+    public static TractatoriGraphEditorWindow WindowInstance { get; private set; }
 
     [OnOpenAsset(1)]
     public static bool OnOpenAsset(int instanceID, int line) {
         if (Selection.activeObject is ManipulationContainer container) {
-            if (!HasOpenInstances<STGraphEditorWindow>()) {
-                WindowInstance = GetWindow<STGraphEditorWindow>("Story Tailor Graph");
+            if (!HasOpenInstances<TractatoriGraphEditorWindow>()) {
+                WindowInstance = GetWindow<TractatoriGraphEditorWindow>("Story Tailor Graph");
 
                 OriginalAsset = container;
                 CurrentEditingAsset = Instantiate(container);
@@ -58,7 +58,7 @@ public class STGraphEditorWindow : EditorWindow
     }
 
     private void ConstructGraphView() {
-        _graphView = new STEditorGraphView() {
+        _graphView = new TractatoriGraphView() {
             name = "Graph View",
         };
         _graphView.Initialize(this);
@@ -149,14 +149,14 @@ public class STGraphEditorWindow : EditorWindow
             switch (runtimeNode) {
                 case IConstantValueNode cn:
                     _graphView.NodeEmitter.EnqueueRequest(new ConstantNodeCreationRequest() {
-                        ExistInstance = runtimeNode,
+                        ExistInstance = Instantiate(runtimeNode),
                         Position = runtimeNode.NodePosition,
                     });
                     break;
 
                 case BaseSequenceNode sn:
                     _graphView.NodeEmitter.EnqueueRequest(new SequenceNodeCreationRequest() {
-                        ExistInstance = runtimeNode,
+                        ExistInstance = Instantiate(runtimeNode),
                         Position = runtimeNode.NodePosition,
                     });
                     break;
@@ -165,7 +165,7 @@ public class STGraphEditorWindow : EditorWindow
                     if (runtimeNode == null) break;
 
                     _graphView.NodeEmitter.EnqueueRequest(new FunctionalNodeCreationRequest() {
-                        ExistInstance = runtimeNode,
+                        ExistInstance = Instantiate(runtimeNode),
                         Position = runtimeNode.NodePosition,
                     });
                     break;
@@ -185,35 +185,19 @@ public class STGraphEditorWindow : EditorWindow
                 continue;
             }
 
-            var fields = STEditorUtilities.GetAllFlowInputFields(node.UnderlyingRuntimeNode.NodeType);
-            var properties = STEditorUtilities.GetAllFlowInputProperties(node.UnderlyingRuntimeNode.NodeType);
-
-            foreach (var field in fields) {
-                FlowInput flow = (FlowInput)field.GetValue(node.UnderlyingRuntimeNode);
-
-                if (!string.IsNullOrEmpty(flow.GUID)) {
-                    var findNode = FindEditorNode(nodes, flow.GUID);
-
-                    if (findNode != null) {
-                        var inputPort = node.Q<STNodePort>(field.Name);
-                        var outputPort = findNode.Query<STNodePort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First();
-
-                        STEditorUtilities.LinkPort(_graphView, outputPort, inputPort);
-                    }
-                }
-            }
+            var properties = TractatoriEditorUtility.GetAllFlowInputs(node.UnderlyingRuntimeNode.NodeType);
 
             foreach (var property in properties) {
-                FlowInput flow = (FlowInput)property.Property.GetValue(node.UnderlyingRuntimeNode);
+                FlowInput flow = (FlowInput)property.GetValue(node.UnderlyingRuntimeNode);
 
                 if (!string.IsNullOrEmpty(flow.GUID)) {
                     var findNode = FindEditorNode(nodes, flow.GUID);
 
                     if (findNode != null) {
-                        var inputPort = node.Q<STNodePort>(property.Property.Name);
-                        var outputPort = findNode.Query<STNodePort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First();
+                        var inputPort = node.Q<TractatoriStandardPort>(property.Name);
+                        var outputPort = findNode.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First();
 
-                        STEditorUtilities.LinkPort(_graphView, outputPort, inputPort);
+                        TractatoriEditorUtility.LinkPort(_graphView, outputPort, inputPort);
                     }
                 }
             }
@@ -240,26 +224,11 @@ public class STGraphEditorWindow : EditorWindow
 
             // Link Entries
             if (sn.UnderlyingRuntimeNode.GUID == CurrentEditingAsset.EntrySequence) {
-                STEditorUtilities.LinkPort(_graphView, _graphView.EntryNode.Q<STNodePort>("output-port"), sn.Q<STNodePort>(DynamicEditorNode.PreviousPortName));
+                TractatoriEditorUtility.LinkPort(_graphView, _graphView.EntryNode.Q<TractatoriStandardPort>("output-port"), sn.Q<TractatoriStandardPort>(DynamicEditorNode.PreviousPortName));
             }
 
             // Link the flow inputs
-            var fields = STEditorUtilities.GetAllFlowInputFields(sn.UnderlyingRuntimeNode.NodeType);
-            var properties = STEditorUtilities.GetAllFlowInputProperties(sn.UnderlyingRuntimeNode.NodeType);
-
-            foreach (var field in fields) {
-                var flow = (FlowInput)field.GetValue(sn.UnderlyingSequenceNode);
-
-                if (!string.IsNullOrEmpty(flow.GUID)) {
-                    var find = FindEditorNode(allNodes, flow.GUID);
-
-                    if (find != null) {
-                        STEditorUtilities.LinkPort(_graphView, find.Query<STNodePort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), sn.Q<STNodePort>(field.Name));
-                    } else {
-                        field.SetValue(sn.UnderlyingRuntimeNode, FlowInput.Null);
-                    }
-                }
-            }
+            var properties = TractatoriEditorUtility.GetAllFlowInputs(sn.UnderlyingRuntimeNode.NodeType);
 
             foreach (var property in properties) {
                 var flow = (FlowInput)property.Property.GetValue(sn.UnderlyingSequenceNode);
@@ -268,9 +237,9 @@ public class STGraphEditorWindow : EditorWindow
                     var find = FindEditorNode(allNodes, flow.GUID);
 
                     if (find != null) {
-                        STEditorUtilities.LinkPort(_graphView, find.Query<STNodePort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), sn.Q<STNodePort>(property.Property.Name));
+                        TractatoriEditorUtility.LinkPort(_graphView, find.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), sn.Q<TractatoriStandardPort>(property.Property.Name));
                     } else {
-                        property.Property.SetValue(sn.UnderlyingRuntimeNode, FlowInput.Null);
+                        property.SetValue(sn.UnderlyingRuntimeNode, FlowInput.Null);
                     }
                 }
             }
@@ -282,7 +251,7 @@ public class STGraphEditorWindow : EditorWindow
             // Link the next sequence node
             for (int j = 0; j < sequenceNodes.Count; j++) {
                 if (sn.UnderlyingSequenceNode.Next.GUID == sequenceNodes[j].UnderlyingSequenceNode.GUID) {
-                    STEditorUtilities.LinkSequenceNodes(_graphView, sequenceNodes[i], sequenceNodes[j]);
+                    TractatoriEditorUtility.LinkSequenceNodes(_graphView, sequenceNodes[i], sequenceNodes[j]);
                     break;
                 }
             }

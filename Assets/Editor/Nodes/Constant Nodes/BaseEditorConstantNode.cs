@@ -24,7 +24,7 @@ public abstract class BaseEditorConstantNode : BaseEditorNode {
                     Debug.Log("Input: " + edge.input.node.GetType().FullName);
                     Debug.Log("Output: " + edge.output.node.GetType().FullName); // Output == this
 
-                    var inputPort = edge.input as STNodePort;
+                    var inputPort = edge.input as TractatoriStandardPort;
                     var inputNode = inputPort.node as BaseEditorNode;
 
                     var underlyingNodeType = inputNode.UnderlyingRuntimeNode.NodeType;

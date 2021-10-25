@@ -8,40 +8,42 @@ using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 
 public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider {
-    private STGraphEditorWindow _window;
-    private STEditorGraphView _graphView;
+    private TractatoriGraphEditorWindow _window;
+    private TractatoriGraphView _graphView;
 
     private static readonly TypeCache.TypeCollection _allRuntimeNodes;
-    private static readonly List<Type> _allSequenceNodes;
     private static readonly List<Type> _allConstantNodes;
-
-    private static readonly List<Type> _allFunctionalNode;
+    private static readonly List<Type> _allSequenceNodes;
+    private static readonly List<Type> _remainNodes;
 
     private static Texture2D indent;
 
     private static readonly Type baseSequenceNodeType = typeof(BaseSequenceNode);
     private static readonly Type constantNodeType = typeof(IConstantValueNode);
+
+    private readonly List<HashSet<string>> pathGroup = new List<HashSet<string>>();
+
     static NodeSearchWindow() {
         _allRuntimeNodes = TypeCache.GetTypesDerivedFrom<BaseRuntimeNode>();
 
-        _allSequenceNodes = new List<Type>();
         _allConstantNodes = new List<Type>();
-        _allFunctionalNode = new List<Type>();
+        _allSequenceNodes = new List<Type>();
+        _remainNodes = new List<Type>();
 
         foreach (var nt in _allRuntimeNodes) {
             if (nt.IsAbstract) continue;
-
-            if (nt.IsSubclassOf(baseSequenceNodeType)) {
-                _allSequenceNodes.Add(nt);
-                continue;
-            }
 
             if (constantNodeType.IsAssignableFrom(nt)) {
                 _allConstantNodes.Add(nt);
                 continue;
             }
 
-            _allFunctionalNode.Add(nt);
+            if (nt.IsSubclassOf(baseSequenceNodeType)) {
+                _allSequenceNodes.Add(nt);
+                continue;
+            }
+
+            _remainNodes.Add(nt);
         }
     }
 
@@ -53,69 +55,75 @@ public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider {
         }
     }
 
-    public void Initialize(STGraphEditorWindow window, STEditorGraphView gv) {
+    public void Initialize(TractatoriGraphEditorWindow window, TractatoriGraphView gv) {
         _window = window;
         _graphView = gv;
     }
 
     public List<SearchTreeEntry> CreateSearchTree(SearchWindowContext context) {
-        var tree = new List<SearchTreeEntry>(_allSequenceNodes.Count + _allFunctionalNode.Count + 16); // 16 as an placeholder value
-        tree.Add(new SearchTreeGroupEntry(new GUIContent("Node Initialization"), 0));
-        tree.Add(new SearchTreeGroupEntry(new GUIContent("Sequencing"), 1));
+        var searchTree = new List<SearchTreeEntry>();
 
+        searchTree.Add(new SearchTreeGroupEntry(new GUIContent("Sequence"), 1));
         foreach (var type in _allSequenceNodes) {
-            var pathAttribute = type.GetCustomAttribute<SequenceNodeSearchPathAttribute>();
-            string path = pathAttribute == null ? "" : pathAttribute.Path;
+            var pathAttribute = type.GetCustomAttribute<CustomizeSearchPathAttribute>();
+            string path = "Sequence/" + (pathAttribute == null ? type.FullName.Replace(".", "/") : pathAttribute.Path);
 
-            AddSearchTreeEntryBasedOnPath(tree, path, 2, new GUIContent(ObjectNames.NicifyVariableName(type.Name), indent), new SequenceNodeCreationRequest() {
+            AddSearchTreeEntryBasedOnPath(searchTree, path, 2, new SequenceNodeCreationRequest() {
                 UnderlyingNodeType = type,
             });
         }
 
-        tree.Add(new SearchTreeGroupEntry(new GUIContent("Functional"), 1));
-        foreach (var type in _allFunctionalNode) {
-            tree.Add(new SearchTreeEntry(new GUIContent(ObjectNames.NicifyVariableName(type.Name), indent)) {
-                userData = new FunctionalNodeCreationRequest() {
-                    UnderlyingNodeType = type,
-                },
-                level = 2,
+        foreach (var type in _remainNodes) {
+            var pathAttribute = type.GetCustomAttribute<CustomizeSearchPathAttribute>();
+            string path = pathAttribute == null ? "Uncategorized/" + type.FullName.Replace(".", "/") : pathAttribute.Path;
+
+            AddSearchTreeEntryBasedOnPath(searchTree, path, 2, new FunctionalNodeCreationRequest() {
+                UnderlyingNodeType = type,
             });
         }
 
-        tree.Add(new SearchTreeGroupEntry(new GUIContent("Constants"), 1));
+        searchTree.Add(new SearchTreeGroupEntry(new GUIContent("Constants"), 2));
 
-        tree.Add(new SearchTreeEntry(new GUIContent("Vector (Float)", indent)) {
+        searchTree.Add(new SearchTreeEntry(new GUIContent("Vector (Float)", indent)) {
             userData = new ConstantNodeCreationRequest() {
                 UnderlyingNodeType = typeof(VectorValueNode),
             },
-            level = 2,
+            level = 3,
         });
 
-        tree.Add(new SearchTreeEntry(new GUIContent("String", indent)) {
+        searchTree.Add(new SearchTreeEntry(new GUIContent("String", indent)) {
             userData = new ConstantNodeCreationRequest() {
                 UnderlyingNodeType = typeof(StringValueNode),
             },
-            level = 2,
+            level = 3,
         });
 
-        return tree;
-    }
-
-    void AddSearchTreeEntryBasedOnPath(List<SearchTreeEntry> list, string path, int startLevel, GUIContent content, object userData) {
-        var splitted = path.Split('/');
-        int invalidCounter = 0;
-
-        for (int i = 0; i < splitted.Length; i++) {
-            if (string.IsNullOrEmpty(splitted[i]) || string.IsNullOrWhiteSpace(splitted[i])) {
-                invalidCounter++;
-                continue;
-            }
-
-            list.Add(new SearchTreeGroupEntry(new GUIContent(splitted[i]), startLevel + i - invalidCounter));
+        foreach (var hs in pathGroup) {
+            hs.Clear();
         }
 
-        list.Add(new SearchTreeEntry(content) {
-            level = startLevel + splitted.Length - invalidCounter,
+        return searchTree;
+    }
+
+    private static readonly char[] Seperators = new char[] { '/' };
+    void AddSearchTreeEntryBasedOnPath(List<SearchTreeEntry> list, string path, int startLevel, object userData) {
+        path = path.Trim('/', ' ');
+
+        string[] splitted = path.Split(Seperators, StringSplitOptions.RemoveEmptyEntries);
+
+        for (int i = 0; i < splitted.Length - 1; i++) {
+            while (pathGroup.Count - 1 < i) {
+                pathGroup.Add(new HashSet<string>());
+            }
+
+            if (!pathGroup[i].Contains(splitted[i])) {
+                pathGroup[i].Add(splitted[i]);
+                list.Add(new SearchTreeGroupEntry(new GUIContent(splitted[i]), startLevel + i));
+            }
+        }
+
+        list.Add(new SearchTreeEntry(new GUIContent(splitted[splitted.Length - 1], indent)) {
+            level = startLevel + splitted.Length - 1,
             userData = userData,
         });
     }

@@ -7,14 +7,14 @@ using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using UnityEditor.Experimental.GraphView;
 
-public class STNodePort : Port
+public class TractatoriStandardPort : Port
 {
     public Action<Edge> OnPortConnect;
     public NodeConnectionCallback ConnectionCallback { get; protected set; }
 
     public int OutputIndex { get; set; } = 0;
 
-    public STNodePort(Orientation portOrientation, Direction portDirection, Capacity portCapacity, Type type) : base(portOrientation, portDirection, portCapacity, type) {
+    public TractatoriStandardPort(Orientation portOrientation, Direction portDirection, Capacity portCapacity, Type type) : base(portOrientation, portDirection, portCapacity, type) {
         ConnectionCallback = new NodeConnectionCallback();
         m_EdgeConnector = new EdgeConnector<Edge>(ConnectionCallback);
 

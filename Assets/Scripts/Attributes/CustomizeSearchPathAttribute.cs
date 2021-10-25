@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-public sealed class SequenceNodeSearchPathAttribute : Attribute
+public sealed class CustomizeSearchPathAttribute : Attribute
 {
     public string Path { get; set; }
 }

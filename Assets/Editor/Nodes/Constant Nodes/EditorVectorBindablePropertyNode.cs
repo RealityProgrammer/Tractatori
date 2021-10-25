@@ -35,7 +35,7 @@ public class EditorVectorBindablePropertyNode : BaseEditorConstantNode
 
         var callback = new NodeConnectionCallback() {
             OnDropCallback = (graphView, edge) => {
-                var inputPort = edge.input as STNodePort;
+                var inputPort = edge.input as TractatoriStandardPort;
                 var inputNode = inputPort.node as BaseEditorNode;
 
                 var underlyingNodeType = inputNode.UnderlyingRuntimeNode.NodeType;

@@ -79,13 +79,13 @@ public class PropertyBindingField
 
     void ContexualMenu(ContextualMenuPopulateEvent evt) {
         evt.menu.AppendAction("Delete", (action) => {
-            switch (STGraphEditorWindow.WindowInstance.BlackboardWrapper.Displaying) {
+            switch (TractatoriGraphEditorWindow.WindowInstance.BlackboardWrapper.Displaying) {
                 case TBlackboardWrapper.DisplayingSection.Object:
-                    STGraphEditorWindow.CurrentEditingAsset.ObjectBindableProperties.Remove(Property as ObjectBindableProperty);
+                    TractatoriGraphEditorWindow.CurrentEditingAsset.ObjectBindableProperties.Remove(Property as ObjectBindableProperty);
                     break;
 
                 case TBlackboardWrapper.DisplayingSection.Vector:
-                    STGraphEditorWindow.CurrentEditingAsset.VectorBindableProperties.Remove(Property as MVectorBindableProperty);
+                    TractatoriGraphEditorWindow.CurrentEditingAsset.VectorBindableProperties.Remove(Property as MVectorBindableProperty);
                     break;
             }
 

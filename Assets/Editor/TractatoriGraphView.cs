@@ -8,16 +8,16 @@ using UnityEditor.Experimental.GraphView;
 using UnityEditor;
 using UnityEditor.UIElements;
 
-public class STEditorGraphView : GraphView
+public class TractatoriGraphView : GraphView
 {
     private NodeSearchWindow _searchWindow;
-    private STGraphEditorWindow _window;
+    private TractatoriGraphEditorWindow _window;
 
     public NodeEmitter NodeEmitter { get; private set; }
 
     public BaseEditorNode EntryNode { get; private set; }
 
-    public STEditorGraphView() {
+    public TractatoriGraphView() {
         styleSheets.Add(Resources.Load<StyleSheet>("GridBackgroundSheet"));
 
         SetupZoom(ContentZoomer.DefaultMinScale, ContentZoomer.DefaultMaxScale);
@@ -52,28 +52,32 @@ public class STEditorGraphView : GraphView
                 // 1 case here, if anything is added in the future, I don't have to reformat it
                 switch (ge) {
                     case Edge edge:
-                        var inputNode = edge.input.node as BaseEditorNode;
-                        var outputNode = edge.output.node as BaseEditorNode;
+                        var editorInputNode = edge.input.node as BaseEditorNode;
+                        var editorOutputNode = edge.output.node as BaseEditorNode;
 
-                        if (inputNode == null || outputNode == null) break; // Guard check
+                        if (editorInputNode == null || editorOutputNode == null) break; // Guard check
 
-                        if (outputNode.IsEntryPoint) {
-                            STGraphEditorWindow.CurrentEditingAsset.EntrySequence = Guid.Empty.ToString();
+                        var inputNode = editorInputNode.UnderlyingRuntimeNode;
+                        var outputNode = editorOutputNode.UnderlyingRuntimeNode;
+
+                        if (inputNode is BaseSequenceNode sequenceInput && outputNode is BaseSequenceNode sequenceOutput) {
+                            sequenceOutput.Next = FlowInput.Null;
+                            sequenceInput.Previous = FlowInput.Null;
+
+                            break;
+                        }
+
+                        if (editorOutputNode.IsEntryPoint) {
+                            TractatoriGraphEditorWindow.CurrentEditingAsset.EntrySequence = Guid.Empty.ToString();
                         } else {
                             var name = edge.input.name;
-                            Debug.Log(inputNode.UnderlyingRuntimeNode.NodeType.FullName);
 
-                            var field = STEditorUtilities.GetAllFlowInputFields(inputNode.UnderlyingRuntimeNode.NodeType).Where(x => x.Name == name).FirstOrDefault();
-                            if (field != null) {
-                                field.SetValue(inputNode.UnderlyingRuntimeNode, FlowInput.Null);
+                            var property = TractatoriEditorUtility.GetAllFlowInputs(inputNode.NodeType).Where(x => x.Name == name).FirstOrDefault();
+
+                            if (property != null) {
+                                property.SetValue(inputNode, FlowInput.Null);
                             } else {
-                                var property = STEditorUtilities.GetAllFlowInputProperties(inputNode.UnderlyingRuntimeNode.NodeType).Where(x => x.Property.Name == name).FirstOrDefault();
-
-                                if (property != null) {
-                                    property.Property.SetValue(inputNode.UnderlyingRuntimeNode, FlowInput.Null);
-                                } else {
-                                    Debug.Log("If you see this message. Report issue and send the container data.");
-                                }
+                                Debug.LogWarning("If you see this message. Report issue and send the container data.");
                             }
                         }
                         break;
@@ -121,11 +125,11 @@ public class STEditorGraphView : GraphView
                     BaseBindablePropertyNode nodeInstance = null;
 
                     switch ((string)field.userData) {
-                        case STGraphEditorWindow.ObjectBindablePropertyUserData:
+                        case TractatoriGraphEditorWindow.ObjectBindablePropertyUserData:
                             nodeInstance = ScriptableObject.CreateInstance<ObjectBindablePropertyNode>();
                             break;
 
-                        case STGraphEditorWindow.VectorBindablePropertyUserData:
+                        case TractatoriGraphEditorWindow.VectorBindablePropertyUserData:
                             nodeInstance = ScriptableObject.CreateInstance<VectorBindablePropertyNode>();
                             break;
                     }
@@ -148,7 +152,7 @@ public class STEditorGraphView : GraphView
         }
     }
 
-    public void Initialize(STGraphEditorWindow window) {
+    public void Initialize(TractatoriGraphEditorWindow window) {
         _window = window;
         AddSearchWindow();
     }
@@ -194,7 +198,7 @@ public class STEditorGraphView : GraphView
         port.portName = "Initialization";
         port.name = "output-port";
         port.ConnectionCallback.OnDropCallback += (GraphView graphView, Edge edge) => {
-            STGraphEditorWindow.CurrentEditingAsset.EntrySequence = ((BaseEditorNode)edge.input.node).UnderlyingRuntimeNode.GUID;
+            TractatoriGraphEditorWindow.CurrentEditingAsset.EntrySequence = ((BaseEditorNode)edge.input.node).UnderlyingRuntimeNode.GUID;
         };
 
         node.outputContainer.Add(port);

@@ -45,7 +45,7 @@ public class DynamicEditorSequenceNode : DynamicEditorNode {
             BaseEditorNode input = edge.input.node as BaseEditorNode;
 
             if (output.IsEntryPoint) {
-                STGraphEditorWindow.CurrentEditingAsset.EntrySequence = input.UnderlyingRuntimeNode.GUID;
+                TractatoriGraphEditorWindow.CurrentEditingAsset.EntrySequence = input.UnderlyingRuntimeNode.GUID;
             } else {
                 ((BaseSequenceNode)input.UnderlyingRuntimeNode).Previous = new FlowInput(output.UnderlyingRuntimeNode.GUID);
                 ((BaseSequenceNode)output.UnderlyingRuntimeNode).Next = new FlowInput(input.UnderlyingRuntimeNode.GUID);

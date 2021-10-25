@@ -31,9 +31,9 @@ public class TBlackboardWrapper
 
     public Action<DisplayingSection> onDisplayChangeCallback;
 
-    public STGraphEditorWindow Window { get; private set; }
+    public TractatoriGraphEditorWindow Window { get; private set; }
 
-    public TBlackboardWrapper(STEditorGraphView _graphView, STGraphEditorWindow _window) {
+    public TBlackboardWrapper(TractatoriGraphView _graphView, TractatoriGraphEditorWindow _window) {
         Window = _window;
 
         Blackboard = new Blackboard(_graphView);
@@ -78,13 +78,13 @@ public class TBlackboardWrapper
 
             switch (Displaying) {
                 case DisplayingSection.Object: {
-                    if (STGraphEditorWindow.CurrentEditingAsset.ObjectBindableProperties.Any(x => x.Name == newValue)) {
+                    if (TractatoriGraphEditorWindow.CurrentEditingAsset.ObjectBindableProperties.Any(x => x.Name == newValue)) {
                         Debug.LogWarning("Binding Property with the name of \"" + newValue + "\" is already exist");
                         EditorApplication.Beep();
                         return;
                     }
 
-                    var objProp = STGraphEditorWindow.CurrentEditingAsset.FindObjectBindableProperty(old);
+                    var objProp = TractatoriGraphEditorWindow.CurrentEditingAsset.FindObjectBindableProperty(old);
                     if (objProp != null) {
                         objProp.Name = newValue;
                         ((BlackboardField)ve).text = newValue;
@@ -93,13 +93,13 @@ public class TBlackboardWrapper
                 }
 
                 case DisplayingSection.Vector: {
-                    if (STGraphEditorWindow.CurrentEditingAsset.VectorBindableProperties.Any(x => x.Name == newValue)) {
+                    if (TractatoriGraphEditorWindow.CurrentEditingAsset.VectorBindableProperties.Any(x => x.Name == newValue)) {
                         Debug.LogWarning("Binding Property with the name of \"" + newValue + "\" is already exist");
                         EditorApplication.Beep();
                         return;
                     }
 
-                    var objProp = STGraphEditorWindow.CurrentEditingAsset.FindVectorBindableProperty(old);
+                    var objProp = TractatoriGraphEditorWindow.CurrentEditingAsset.FindVectorBindableProperty(old);
                     if (objProp != null) {
                         objProp.Name = newValue;
                         ((BlackboardField)ve).text = newValue;
@@ -119,14 +119,14 @@ public class TBlackboardWrapper
     public void GenerateFields() {
         switch (Displaying) {
             case DisplayingSection.Object:
-                foreach (var objField in STGraphEditorWindow.CurrentEditingAsset.ObjectBindableProperties) {
-                    Window.CreateFieldForBindableProperty(objField).Field.userData = STGraphEditorWindow.ObjectBindablePropertyUserData;
+                foreach (var objField in TractatoriGraphEditorWindow.CurrentEditingAsset.ObjectBindableProperties) {
+                    Window.CreateFieldForBindableProperty(objField).Field.userData = TractatoriGraphEditorWindow.ObjectBindablePropertyUserData;
                 }
                 break;
 
             case DisplayingSection.Vector:
-                foreach (var vectorField in STGraphEditorWindow.CurrentEditingAsset.VectorBindableProperties) {
-                    Window.CreateFieldForBindableProperty(vectorField).Field.userData = STGraphEditorWindow.VectorBindablePropertyUserData;
+                foreach (var vectorField in TractatoriGraphEditorWindow.CurrentEditingAsset.VectorBindableProperties) {
+                    Window.CreateFieldForBindableProperty(vectorField).Field.userData = TractatoriGraphEditorWindow.VectorBindablePropertyUserData;
                 }
                 break;
         }

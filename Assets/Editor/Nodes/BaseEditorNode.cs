@@ -42,8 +42,8 @@ public class BaseEditorNode : Node
 
     public virtual void Initialize() { }
 
-    public STNodePort GeneratePort(Direction direction, Port.Capacity capacity, Type type) {
-        var port = new STNodePort(Orientation.Horizontal, direction, capacity, type);
+    public TractatoriStandardPort GeneratePort(Direction direction, Port.Capacity capacity, Type type) {
+        var port = new TractatoriStandardPort(Orientation.Horizontal, direction, capacity, type);
         port.portColor = GetPortColor(type);
 
         return port;
