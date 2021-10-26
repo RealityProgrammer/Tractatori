@@ -219,18 +219,35 @@ public class TractatoriGraphView : GraphView
     public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter) {
         var compatibles = new List<Port>();
 
-        ports.ForEach(port => {
-            if (startPort == port || startPort.node == port.node || port.direction == startPort.direction) {
-                return;
-            }
+        if (startPort.direction == Direction.Output) {
+            var outputPort = startPort as TractatoriStandardPort;
 
-            // Temporary fix
-            if (!port.portType.IsAssignableFrom(startPort.portType)) {
-                return;
-            }
+            ports.ForEach(port => {
+                if (startPort == port || startPort.node == port.node || port.direction == Direction.Output) {
+                    return;
+                }
 
-            compatibles.Add(port);
-        });
+                if (port is TractatoriStandardPort inputPort) {
+                    foreach (var type in inputPort.ExpectedTypes) {
+                        if (type.IsAssignableFrom(outputPort.portType)) {
+                            compatibles.Add(port);
+                            break;
+                        }
+                    }
+                }
+            });
+        } else {
+            ports.ForEach(port => {
+                if (startPort == port || startPort.node == port.node || port.direction == Direction.Output) {
+                    return;
+                }
+
+                if (port is TractatoriStandardPort outputPort) {
+
+                }
+            });
+            Debug.LogWarning("Connection from Input ports are currently being constructed");
+        }
 
         return compatibles;
     }

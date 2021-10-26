@@ -127,7 +127,11 @@ public class FieldOrPropertyInfo {
     public T GetAttribute<T>() where T : Attribute {
         switch (UsingType) {
             case InfoType.Field: return Field.GetCustomAttribute<T>();
-            case InfoType.Property: return Property.GetCustomAttribute<T>();
+            case InfoType.Property:
+                var attr = Property.GetCustomAttribute<T>();
+
+                return attr ?? Field.GetCustomAttribute<T>();
+
             case InfoType.Null:
             default:
                 throw new NullReferenceException("Cannot get attribute of Field or Property Info because both FieldInfo and PropertyInfo is null");

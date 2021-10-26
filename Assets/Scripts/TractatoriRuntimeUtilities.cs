@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class ManipulationUtilities
+public static class TractatoriRuntimeUtilities
 {
     // By design, each non-abstract node need an private, non-static Evaluate() method to be able to evaluated
     // Therefore, Reflection need to be used for both dynamically and ease-of-use
@@ -127,22 +127,12 @@ public static class ManipulationUtilities
         if (_nodeEvaluateMethodCache.TryGetValue(nodeType, out var output)) {
             return output;
         } else {
-            var methods = nodeType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-            foreach (var method in methods) {
-                if (method.Name == EvaluateMethodName) {
-                    var parameters = method.GetParameters();
+            var method = nodeType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Where(x => x.Name == EvaluateMethodName).FirstOrDefault();
+            if (method != null) {
+                output = new NodeEvaluateCache(method);
+                _nodeEvaluateMethodCache.Add(nodeType, output);
 
-                    //Debug.Log(nodeType.FullName);
-                    //if (parameters.Length == 0 || (parameters.Length == 1 && parameters[0].ParameterType == NodeEvaluationInfoType)) {
-                        output = new NodeEvaluateCache(method);
-                        _nodeEvaluateMethodCache.Add(nodeType, output);
-
-                        //Debug.Log("Yes");
-
-                        return output;
-                    //}
-                    //Debug.Log("NO");
-                }
+                return output;
             }
 
             return null;

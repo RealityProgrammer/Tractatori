@@ -8,7 +8,10 @@ using UnityEngine.UIElements;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor;
 
-public class DynamicEditorSequenceNode : DynamicEditorNode {
+public class DynamicEditorSequenceNode : DynamicEditorFunctionalNode {
+    public const string PreviousPortName = "previous-sequence";
+    public const string NextPortName = "next-sequence";
+
     public BaseSequenceNode UnderlyingSequenceNode {
         get => UnderlyingRuntimeNode as BaseSequenceNode;
         set {
@@ -17,13 +20,6 @@ public class DynamicEditorSequenceNode : DynamicEditorNode {
             }
 
             UnderlyingRuntimeNode = value;
-        }
-    }
-
-    public DynamicEditorSequenceNode(BaseRuntimeNode underlying) : base(underlying) {
-        if (!(underlying is BaseSequenceNode)) {
-            Debug.LogError("Trying to create DynamicEditorSequenceNode with the underlying node of invalid type (Require node child of BaseSequenceNode)");
-            UnderlyingRuntimeNode = null;
         }
     }
 

@@ -12,6 +12,8 @@ public class TractatoriStandardPort : Port
     public Action<Edge> OnPortConnect;
     public NodeConnectionCallback ConnectionCallback { get; protected set; }
 
+    public Type[] ExpectedTypes { get; set; }
+
     public int OutputIndex { get; set; } = 0;
 
     public TractatoriStandardPort(Orientation portOrientation, Direction portDirection, Capacity portCapacity, Type type) : base(portOrientation, portDirection, portCapacity, type) {

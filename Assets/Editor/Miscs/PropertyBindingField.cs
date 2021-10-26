@@ -51,6 +51,7 @@ public class PropertyBindingField
             // typeText = property.Value == null ? "Null" : property.Value.GetType().FullName,
         };
         Field.RegisterCallback<DetachFromPanelEvent>(DestroyCallback);
+        Field.capabilities &= ~Capabilities.Deletable;
 
         RegisterCallbacks();
 

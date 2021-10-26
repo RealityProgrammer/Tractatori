@@ -12,9 +12,33 @@ public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider {
     private TractatoriGraphView _graphView;
 
     private static readonly TypeCache.TypeCollection _allRuntimeNodes;
-    private static readonly List<Type> _allConstantNodes;
-    private static readonly List<Type> _allSequenceNodes;
-    private static readonly List<Type> _remainNodes;
+    private static List<Type> _allConstantNodes;
+    private static List<SequenceNodeInfoCache> _allSequenceNodes;
+
+    private class SequenceNodeInfoCache {
+        public Type Type { get; private set; }
+        public string Path { get; private set; }
+
+        public SequenceNodeInfoCache(Type type) {
+            Type = type;
+
+            var pathAttribute = Type.GetCustomAttribute<CustomizeSearchPathAttribute>();
+            Path = "Sequence/" + (pathAttribute == null ? (Type.Namespace ?? "").Replace(".", "/") + ObjectNames.NicifyVariableName(Type.Name) : pathAttribute.Path);
+        }
+    }
+    private class NodeInfoCache {
+        public Type Type { get; private set; }
+        public string Path { get; private set; }
+
+        public NodeInfoCache(Type type) {
+            Type = type;
+
+            var pathAttribute = Type.GetCustomAttribute<CustomizeSearchPathAttribute>();
+            Path = pathAttribute == null ? "Uncategorized/" + (Type.Namespace ?? "").Replace(".", "/") + ObjectNames.NicifyVariableName(Type.Name) : pathAttribute.Path;
+        }
+    }
+
+    private static List<NodeInfoCache> _remainNodes;
 
     private static Texture2D indent;
 
@@ -23,28 +47,9 @@ public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider {
 
     private readonly List<HashSet<string>> pathGroup = new List<HashSet<string>>();
 
+    static bool initialized = false;
     static NodeSearchWindow() {
         _allRuntimeNodes = TypeCache.GetTypesDerivedFrom<BaseRuntimeNode>();
-
-        _allConstantNodes = new List<Type>();
-        _allSequenceNodes = new List<Type>();
-        _remainNodes = new List<Type>();
-
-        foreach (var nt in _allRuntimeNodes) {
-            if (nt.IsAbstract) continue;
-
-            if (constantNodeType.IsAssignableFrom(nt)) {
-                _allConstantNodes.Add(nt);
-                continue;
-            }
-
-            if (nt.IsSubclassOf(baseSequenceNodeType)) {
-                _allSequenceNodes.Add(nt);
-                continue;
-            }
-
-            _remainNodes.Add(nt);
-        }
     }
 
     void OnEnable() {
@@ -52,6 +57,33 @@ public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider {
             indent = new Texture2D(1, 1);
             indent.SetPixel(0, 0, Color.clear);
             indent.Apply();
+        }
+
+        if (!initialized) {
+            initialized = true;
+
+            _allConstantNodes = new List<Type>();
+            _allSequenceNodes = new List<SequenceNodeInfoCache>();
+            _remainNodes = new List<NodeInfoCache>();
+
+            foreach (var nt in _allRuntimeNodes) {
+                if (nt.IsAbstract) continue;
+
+                if (constantNodeType.IsAssignableFrom(nt)) {
+                    _allConstantNodes.Add(nt);
+                    continue;
+                }
+
+                if (nt.IsSubclassOf(baseSequenceNodeType)) {
+                    _allSequenceNodes.Add(new SequenceNodeInfoCache(nt));
+                    continue;
+                }
+
+                _remainNodes.Add(new NodeInfoCache(nt));
+            }
+
+            _allSequenceNodes = _allSequenceNodes.OrderBy(x => x.Path).ToList();
+            _remainNodes = _remainNodes.OrderBy(x => x.Path).ToList();
         }
     }
 
@@ -65,20 +97,14 @@ public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider {
 
         searchTree.Add(new SearchTreeGroupEntry(new GUIContent("Sequence"), 1));
         foreach (var type in _allSequenceNodes) {
-            var pathAttribute = type.GetCustomAttribute<CustomizeSearchPathAttribute>();
-            string path = "Sequence/" + (pathAttribute == null ? type.FullName.Replace(".", "/") : pathAttribute.Path);
-
-            AddSearchTreeEntryBasedOnPath(searchTree, path, 2, new SequenceNodeCreationRequest() {
-                UnderlyingNodeType = type,
+            AddSearchTreeEntryBasedOnPath(searchTree, type.Path, 2, new SequenceNodeCreationRequest() {
+                UnderlyingNodeType = type.Type,
             });
         }
 
         foreach (var type in _remainNodes) {
-            var pathAttribute = type.GetCustomAttribute<CustomizeSearchPathAttribute>();
-            string path = pathAttribute == null ? "Uncategorized/" + type.FullName.Replace(".", "/") : pathAttribute.Path;
-
-            AddSearchTreeEntryBasedOnPath(searchTree, path, 2, new FunctionalNodeCreationRequest() {
-                UnderlyingNodeType = type,
+            AddSearchTreeEntryBasedOnPath(searchTree, type.Path, 2, new FunctionalNodeCreationRequest() {
+                UnderlyingNodeType = type.Type,
             });
         }
 
@@ -87,6 +113,13 @@ public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider {
         searchTree.Add(new SearchTreeEntry(new GUIContent("Vector (Float)", indent)) {
             userData = new ConstantNodeCreationRequest() {
                 UnderlyingNodeType = typeof(VectorValueNode),
+            },
+            level = 3,
+        });
+
+        searchTree.Add(new SearchTreeEntry(new GUIContent("Vector (Integer)", indent)) {
+            userData = new ConstantNodeCreationRequest() {
+                UnderlyingNodeType = typeof(VectorIntValueNode),
             },
             level = 3,
         });

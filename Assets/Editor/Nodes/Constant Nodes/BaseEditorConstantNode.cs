@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
-using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
@@ -8,7 +9,7 @@ using UnityEditor.Experimental.GraphView;
 
 public abstract class BaseEditorConstantNode : BaseEditorNode {
     public override void Initialize() {
-        var cache = ManipulationUtilities.GetEvaluateCache(UnderlyingRuntimeNode.NodeType);
+        var cache = TractatoriRuntimeUtilities.GetEvaluateCache(UnderlyingRuntimeNode.NodeType);
         var parameters = cache.Parameters;
 
         foreach (var parameter in parameters) {
@@ -21,25 +22,14 @@ public abstract class BaseEditorConstantNode : BaseEditorNode {
 
             var callback = new NodeConnectionCallback() {
                 OnDropCallback = (graphView, edge) => {
-                    Debug.Log("Input: " + edge.input.node.GetType().FullName);
-                    Debug.Log("Output: " + edge.output.node.GetType().FullName); // Output == this
+                    var inputNode = edge.input.node as BaseEditorNode;
 
-                    var inputPort = edge.input as TractatoriStandardPort;
-                    var inputNode = inputPort.node as BaseEditorNode;
+                    var property = TractatoriEditorUtility.GetAllFlowInputs(inputNode.UnderlyingRuntimeNode.NodeType).Where(x => x.Name == edge.input.name).FirstOrDefault();
 
-                    var underlyingNodeType = inputNode.UnderlyingRuntimeNode.NodeType;
-
-                    FieldInfo field = underlyingNodeType.GetField(inputPort.name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-                    if (field != null) {
-                        field.SetValue(inputNode.UnderlyingRuntimeNode, new FlowInput(UnderlyingRuntimeNode.GUID));
+                    if (property != null) {
+                        property.SetValue(inputNode.UnderlyingRuntimeNode, new FlowInput(UnderlyingRuntimeNode.GUID));
                     } else {
-                        PropertyInfo info = underlyingNodeType.GetProperty(inputPort.name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-                        if (info != null) {
-                            info.SetValue(inputNode.UnderlyingRuntimeNode, new FlowInput(UnderlyingRuntimeNode.GUID));
-                        } else {
-                            Debug.Log("Wat");
-                        }
+                        Debug.LogWarning("Something went wrong...");
                     }
                 },
             };

@@ -1,41 +1,31 @@
 ﻿using System;
-using System.Reflection;
 using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine.UIElements;
 using UnityEditor.Experimental.GraphView;
 
-public class DynamicEditorNode : BaseEditorNode {
-    public const string PreviousPortName = "previous-sequence";
-    public const string NextPortName = "next-sequence";
-
-    public const BindingFlags FieldBindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
-    public const BindingFlags PropertyBindingFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic;
-
-    private static readonly Type objectType = typeof(object);
-
-    public DynamicEditorNode(BaseRuntimeNode underlying) {
-        UnderlyingRuntimeNode = underlying;
-    }
-
+public abstract class BaseEditorFunctionalNode : BaseEditorNode {
     public override void Initialize() {
-        title = ObjectNames.NicifyVariableName(UnderlyingRuntimeNode.NodeType.Name);
+        base.Initialize();
 
         contentContainer.Q("contents").Q("top").Q("output").style.backgroundColor = Color.clear;
         contentContainer.Q("contents").style.backgroundColor = (Color)new Color32(46, 46, 46, 205);
+    }
 
+    private static readonly Type[] fallbackTypes = new Type[1] { typeof(object) };
+    protected void CreateDefaultInputPorts() {
         foreach (var property in TractatoriEditorUtility.GetAllFlowInputs(UnderlyingRuntimeNode.NodeType)) {
             var expectedTypeAttribute = property.GetAttribute<ExpectedInputTypeAttribute>();
 
-            var expectedType = expectedTypeAttribute == null ? objectType : expectedTypeAttribute.Expected;
+            var expectedTypes = expectedTypeAttribute == null ? fallbackTypes : expectedTypeAttribute.Expected;
 
-            var port = GeneratePort(Direction.Input, Port.Capacity.Single, expectedType);
+            var port = GeneratePort(Direction.Input, Port.Capacity.Single, expectedTypes);
             port.portName = ObjectNames.NicifyVariableName(property.Name);
             port.name = property.Name;
+            port.portColor = GetPortColor(port.portType);
 
             var callback = new NodeConnectionCallback() {
                 OnDropCallback = (graphView, edge) => {
@@ -48,8 +38,10 @@ public class DynamicEditorNode : BaseEditorNode {
             port.AddManipulator(new EdgeConnector<Edge>(callback));
             inputContainer.Add(port);
         }
+    }
 
-        var evaluateCache = ManipulationUtilities.GetEvaluateCache(UnderlyingRuntimeNode.NodeType);
+    protected void CreateDefaultOutputPorts() {
+        var evaluateCache = TractatoriRuntimeUtilities.GetEvaluateCache(UnderlyingRuntimeNode.NodeType);
         if (evaluateCache == null) {
             Debug.LogWarning("Something gone wrong while building port for runtime node of type " + UnderlyingRuntimeNode.NodeType.FullName);
         } else {
@@ -63,17 +55,18 @@ public class DynamicEditorNode : BaseEditorNode {
                 port.portName = ObjectNames.NicifyVariableName(parameter.Name);
                 port.name = parameter.Name;
                 port.OutputIndex = evaluateCache.LayoutIndex[i];
+                port.portColor = GetPortColor(port.portType);
 
                 var callback = new NodeConnectionCallback() {
                     OnDropCallback = (graphView, edge) => {
                         var output = edge.output.node as BaseEditorNode;
                         var input = edge.input.node as BaseEditorNode;
 
-                        var property = TractatoriEditorUtility.GetAllFlowInputs(input.UnderlyingRuntimeNode.NodeType).Where(x => x.Name == name).FirstOrDefault();
+                        var property = TractatoriEditorUtility.GetAllFlowInputs(input.UnderlyingRuntimeNode.NodeType).Where(x => x.Name == edge.input.name).FirstOrDefault();
                         if (property != null) {
                             property.SetValue(input.UnderlyingRuntimeNode, new FlowInput(output.UnderlyingRuntimeNode.GUID, port.OutputIndex));
                         } else {
-                            Debug.LogWarning("Something went wrong while connecting Editor Node.");
+                            Debug.LogWarning("Something went wrong while connecting Editor Node. Information: Tried to find Property " + edge.input.name + " of node type " + input.UnderlyingRuntimeNode.NodeType.AssemblyQualifiedName);
                         }
                     }
                 };
@@ -85,20 +78,25 @@ public class DynamicEditorNode : BaseEditorNode {
                 outTracker++;
             }
         }
-
-        RefreshExpandedState();
-        RefreshPorts();
     }
 
-    public bool IsValidField(FieldInfo field) {
-        if (!field.IsPublic) {
-            if (field.GetCustomAttribute<SerializeField>() == null) return false;
-        }
+    protected VisualElement CreateFieldContainer() {
+        var contents = contentContainer.Q("contents");
 
-        return !field.Name.EndsWith("k__BackingField");
-    }
+        var seperator = new VisualElement();
+        seperator.name = "seperator";
+        seperator.style.borderBottomWidth = 1;
+        seperator.style.backgroundColor = (Color)new Color32(35, 35, 35, 255);
 
-    public bool IsValidProperty(PropertyInfo property) {
-        return property.CanRead && property.CanWrite && UnderlyingRuntimeNode.NodeType.GetField("<" + property.Name + ">k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic) != null;
+        contents.Add(seperator);
+
+        var fieldContainer = new VisualElement();
+        fieldContainer.style.height = StyleKeyword.Auto;
+        fieldContainer.style.width = StyleKeyword.Auto;
+        fieldContainer.style.backgroundColor = new Color(0.24f, 0.24f, 0.24f, 0.65f);
+
+        contents.Add(fieldContainer);
+
+        return fieldContainer;
     }
 }

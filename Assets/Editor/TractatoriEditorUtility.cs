@@ -67,7 +67,7 @@ public static class TractatoriEditorUtility {
     }
 
     public static void LinkSequenceNodes(TractatoriGraphView graphView, DynamicEditorSequenceNode input, DynamicEditorSequenceNode output) {
-        LinkPort(graphView, input.Q<TractatoriStandardPort>(DynamicEditorNode.NextPortName), output.Q<TractatoriStandardPort>(DynamicEditorSequenceNode.PreviousPortName));
+        LinkPort(graphView, input.Q<TractatoriStandardPort>(DynamicEditorSequenceNode.NextPortName), output.Q<TractatoriStandardPort>(DynamicEditorSequenceNode.PreviousPortName));
     }
 
     public static void LinkPort(TractatoriGraphView graphView, TractatoriStandardPort output, TractatoriStandardPort input) {

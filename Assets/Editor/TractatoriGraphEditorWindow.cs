@@ -224,7 +224,7 @@ public class TractatoriGraphEditorWindow : EditorWindow
 
             // Link Entries
             if (sn.UnderlyingRuntimeNode.GUID == CurrentEditingAsset.EntrySequence) {
-                TractatoriEditorUtility.LinkPort(_graphView, _graphView.EntryNode.Q<TractatoriStandardPort>("output-port"), sn.Q<TractatoriStandardPort>(DynamicEditorNode.PreviousPortName));
+                TractatoriEditorUtility.LinkPort(_graphView, _graphView.EntryNode.Q<TractatoriStandardPort>("output-port"), sn.Q<TractatoriStandardPort>(DynamicEditorSequenceNode.PreviousPortName));
             }
 
             // Link the flow inputs

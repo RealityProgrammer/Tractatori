@@ -62,7 +62,7 @@ public class ManipulationContainer : ScriptableObject
         // Functional nodes don't use return value, so discard it
         var invokeReturn = node.Invoke(evaluationInfo, out _);
 
-        return invokeReturn[ManipulationUtilities.FindParameterOutputIndexOutOnly(node.NodeType, input.OutputIndex)];
+        return invokeReturn[TractatoriRuntimeUtilities.FindParameterOutputIndexOutOnly(node.NodeType, input.OutputIndex)];
     }
 
     /// <summary>
@@ -81,7 +81,7 @@ public class ManipulationContainer : ScriptableObject
         // Functional nodes don't use method with return value (only out parameter), so discard it
         var invokeReturn = node.Invoke(evaluationInfo, out _);
 
-        return invokeReturn[ManipulationUtilities.FindParameterOutputIndexOutOnly(node.NodeType, input.OutputIndex)];
+        return invokeReturn[TractatoriRuntimeUtilities.FindParameterOutputIndexOutOnly(node.NodeType, input.OutputIndex)];
     }
 
     public ObjectBindableProperty FindObjectBindableProperty(string name) {
@@ -128,9 +128,9 @@ public class ManipulationContainer : ScriptableObject
 
         node.InvokeNodeEvaluateMethod(evaluationInfo, out object ret);
 
-        var cache = ManipulationUtilities.GetEvaluateCache(node.NodeType);
+        var cache = TractatoriRuntimeUtilities.GetEvaluateCache(node.NodeType);
 
-        if (cache.Method.ReturnType != ManipulationUtilities.VoidType) {
+        if (cache.Method.ReturnType != TractatoriRuntimeUtilities.VoidType) {
             yield return ret;
         }
 

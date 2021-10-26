@@ -21,6 +21,10 @@ public struct FlowInput
         OutputIndex = outputIndex;
     }
 
+    public bool IsNull() {
+        return GUID == "00000000-0000-0000-0000-000000000000" || string.IsNullOrEmpty(GUID);
+    }
+
     public override string ToString() {
         return "FlowInput(GUID: " + GUID + ", Output Index: " + OutputIndex + ")";
     }

@@ -31,7 +31,7 @@ public class ConstantNodeCreationRequest : NodeCreationRequest {
             var attr = type.GetCustomAttribute<DrawerForConstantNodeAttribute>();
 
             if (attr == null) {
-                Debug.LogWarning("An editor type derived from BaseEditorConstantNode but without attribute [DrawerForConstantNode] detected: " + type.FullName);
+                Debug.LogWarning("An editor type derived from BaseEditorConstantNode but without attribute [DrawerForConstantNode] detected: " + type.AssemblyQualifiedName);
             } else {
                 if (_editorDictionary.TryGetValue(attr.RuntimeType, out var drawer)) {
                     Debug.LogWarning($"Constant node type {attr.RuntimeType.FullName} already has a drawer type of {drawer.FullName}");
@@ -80,21 +80,71 @@ public class ConstantNodeCreationRequest : NodeCreationRequest {
 }
 
 public class FunctionalNodeCreationRequest : NodeCreationRequest {
-    public override NodeCreationResult Handle() {
-        NodeCreationResult result = new NodeCreationResult() {
-            Output = new DynamicEditorNode((ExistInstance == null ? ScriptableObject.CreateInstance(UnderlyingNodeType) : ExistInstance) as BaseRuntimeNode),
-            Result = true,
-            Request = this,
-        };
+    private static readonly Dictionary<Type, Type> _editorDictionary;
+    static FunctionalNodeCreationRequest() {
+        _editorDictionary = new Dictionary<Type, Type>();
 
-        return result;
+        var cache = TypeCache.GetTypesDerivedFrom<BaseEditorFunctionalNode>();
+        foreach (var type in cache) {
+            var attr = type.GetCustomAttribute<FunctionalNodeCreationAttribute>();
+
+            if (attr != null) {
+                if (_editorDictionary.TryGetValue(attr.TargetType, out var drawer)) {
+                    Debug.LogWarning($"Constant node type {attr.TargetType.FullName} already has a drawer type of {drawer.FullName}");
+                } else {
+                    _editorDictionary.Add(attr.TargetType, type);
+                }
+            }
+        }
+    }
+
+    private static Type GetFunctionalNodeCreationOfNodeType(Type nodeType) {
+        if (_editorDictionary.TryGetValue(nodeType, out var outputType)) {
+            return outputType;
+        }
+
+        var baseType = nodeType.BaseType;
+        while (baseType != null) {
+            _editorDictionary.TryGetValue(baseType, out outputType);
+            if (outputType != null) {
+                return outputType;
+            }
+
+            baseType = baseType.BaseType;
+        }
+
+        return outputType;
+    }
+
+    public override NodeCreationResult Handle() {
+        var drawer = GetFunctionalNodeCreationOfNodeType(ExistInstance == null ? UnderlyingNodeType : ExistInstance.NodeType);
+
+        if (drawer != null) {
+            NodeCreationResult result = new NodeCreationResult() {
+                Result = true,
+                Request = this,
+            };
+
+            result.Output = Activator.CreateInstance(drawer) as BaseEditorFunctionalNode;
+            result.Output.UnderlyingRuntimeNode = (ExistInstance == null ? ScriptableObject.CreateInstance(UnderlyingNodeType) : ExistInstance) as BaseRuntimeNode;
+
+            return result;
+        } else {
+            NodeCreationResult result = new NodeCreationResult() {
+                Output = new DynamicEditorFunctionalNode() { UnderlyingRuntimeNode = (ExistInstance == null ? ScriptableObject.CreateInstance(UnderlyingNodeType) : ExistInstance) as BaseRuntimeNode },
+                Result = true,
+                Request = this,
+            };
+
+            return result;
+        }
     }
 }
 
 public class SequenceNodeCreationRequest : NodeCreationRequest {
     public override NodeCreationResult Handle() {
         NodeCreationResult result = new NodeCreationResult() {
-            Output = new DynamicEditorSequenceNode((ExistInstance == null ? ScriptableObject.CreateInstance(UnderlyingNodeType) : ExistInstance) as BaseSequenceNode),
+            Output = new DynamicEditorSequenceNode() { UnderlyingRuntimeNode = (ExistInstance == null ? ScriptableObject.CreateInstance(UnderlyingNodeType) : ExistInstance) as BaseSequenceNode },
             Result = true,
             Request = this,
         };

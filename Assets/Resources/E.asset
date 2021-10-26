@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-5856704220986346365
+--- !u!114 &-5241238347455486665
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -9,17 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e5399b8fb8832f428097057c067f5f1, type: 3}
-  m_Name: 8a5fdd88-eaac-4100-9829-95943c3f0229
+  m_Script: {fileID: 11500000, guid: e52349e0b2b61364f93cfed84db8a56e, type: 3}
+  m_Name: 26d6ea49-bea3-469c-a1f7-9954dd2a0820
   m_EditorClassIdentifier: 
-  <GUID>k__BackingField: 8a5fdd88-eaac-4100-9829-95943c3f0229
-  <NodePosition>k__BackingField: {x: 149, y: 131}
-  <StringInput>k__BackingField:
-    <GUID>k__BackingField: 5cca35e0-9ddd-4a9d-b2b3-7a3618a48fbd
-    <OutputIndex>k__BackingField: 0
-  <ObjectInput>k__BackingField:
-    <GUID>k__BackingField: d5826e77-0359-4b68-8b1e-d2e57de99ebe
-    <OutputIndex>k__BackingField: 0
+  <GUID>k__BackingField: 26d6ea49-bea3-469c-a1f7-9954dd2a0820
+  <NodePosition>k__BackingField: {x: -63, y: 159}
+  <Value>k__BackingField:
+    <X>k__BackingField: 1
+    <Y>k__BackingField: 1
+    <Z>k__BackingField: 1
+    <W>k__BackingField: 0
+    <Axis>k__BackingField: 4
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32,43 +32,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0afde2d84bee2304bbef3c3e030d79a5, type: 3}
   m_Name: E
   m_EditorClassIdentifier: 
-  <EntrySequence>k__BackingField: 4007b193-e21c-43c6-b4fd-aee7acdb9074
+  <EntrySequence>k__BackingField: ce5e8a53-f294-404e-931f-30e7dffc61a8
   <NodeContainer>k__BackingField:
-  - {fileID: 7442725209498263054}
-  - {fileID: 135539280300441731}
-  - {fileID: 8114737640516900481}
-  - {fileID: -5856704220986346365}
+  - {fileID: 1799829865303122515}
+  - {fileID: 3792222768952252079}
+  - {fileID: -5241238347455486665}
   <ObjectBindableProperties>k__BackingField:
   - <Name>k__BackingField: a61ff360
     <Exposed>k__BackingField: 0
     <Value>k__BackingField: {fileID: 0}
   <VectorBindableProperties>k__BackingField:
-  - <Name>k__BackingField: 64d2181c
-    <Exposed>k__BackingField: 0
-    <Value>k__BackingField:
-      <Vector>k__BackingField: {x: 1, y: 2, z: 3, w: 4}
-      <Axis>k__BackingField: 4
-  - <Name>k__BackingField: 891dd734
-    <Exposed>k__BackingField: 0
+  - <Name>k__BackingField: b1a30102
+    <Exposed>k__BackingField: 1
     <Value>k__BackingField:
       <Vector>k__BackingField: {x: 0, y: 0, z: 0, w: 0}
       <Axis>k__BackingField: 4
-  - <Name>k__BackingField: c0793e01
-    <Exposed>k__BackingField: 0
-    <Value>k__BackingField:
-      <Vector>k__BackingField: {x: 0, y: 0, z: 0, w: 0}
-      <Axis>k__BackingField: 4
-  - <Name>k__BackingField: 4e59448e
-    <Exposed>k__BackingField: 0
-    <Value>k__BackingField:
-      <Vector>k__BackingField: {x: 0, y: 0, z: 0, w: 0}
-      <Axis>k__BackingField: 4
-  - <Name>k__BackingField: c49dfe9b
-    <Exposed>k__BackingField: 0
-    <Value>k__BackingField:
-      <Vector>k__BackingField: {x: 0, y: 0, z: 0, w: 0}
-      <Axis>k__BackingField: 4
---- !u!114 &135539280300441731
+--- !u!114 &1799829865303122515
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -77,30 +56,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 65daff00d35393944a1d6e6326bb2297, type: 3}
-  m_Name: d5826e77-0359-4b68-8b1e-d2e57de99ebe
+  m_Script: {fileID: 11500000, guid: 3aba3e1301b374f40b8345173bb6f59c, type: 3}
+  m_Name: f791d4a8-c1f5-4612-8473-e918419c1357
   m_EditorClassIdentifier: 
-  <GUID>k__BackingField: d5826e77-0359-4b68-8b1e-d2e57de99ebe
-  <NodePosition>k__BackingField: {x: -127, y: 259}
-  <Value>k__BackingField:
-    <Vector>k__BackingField: {x: 122, y: 0, z: 0, w: 0}
-    <Axis>k__BackingField: 1
---- !u!114 &7442725209498263054
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74a95630c8643b84ca99547daad56858, type: 3}
-  m_Name: 5cca35e0-9ddd-4a9d-b2b3-7a3618a48fbd
-  m_EditorClassIdentifier: 
-  <GUID>k__BackingField: 5cca35e0-9ddd-4a9d-b2b3-7a3618a48fbd
-  <NodePosition>k__BackingField: {x: -121, y: 147}
-  <Value>k__BackingField: Hello World
---- !u!114 &8114737640516900481
+  <GUID>k__BackingField: f791d4a8-c1f5-4612-8473-e918419c1357
+  <NodePosition>k__BackingField: {x: 178, y: 119}
+  <Input>k__BackingField:
+    <GUID>k__BackingField: 26d6ea49-bea3-469c-a1f7-9954dd2a0820
+    <OutputIndex>k__BackingField: 0
+--- !u!114 &3792222768952252079
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -110,10 +74,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5599256452fc7774da3c199ae30e8eff, type: 3}
-  m_Name: 4007b193-e21c-43c6-b4fd-aee7acdb9074
+  m_Name: ce5e8a53-f294-404e-931f-30e7dffc61a8
   m_EditorClassIdentifier: 
-  <GUID>k__BackingField: 4007b193-e21c-43c6-b4fd-aee7acdb9074
-  <NodePosition>k__BackingField: {x: 363, y: 6}
+  <GUID>k__BackingField: ce5e8a53-f294-404e-931f-30e7dffc61a8
+  <NodePosition>k__BackingField: {x: 375, y: 15}
   _previous:
     <GUID>k__BackingField: 
     <OutputIndex>k__BackingField: 0
@@ -121,5 +85,5 @@ MonoBehaviour:
     <GUID>k__BackingField: 
     <OutputIndex>k__BackingField: 0
   <Input>k__BackingField:
-    <GUID>k__BackingField: 8a5fdd88-eaac-4100-9829-95943c3f0229
+    <GUID>k__BackingField: f791d4a8-c1f5-4612-8473-e918419c1357
     <OutputIndex>k__BackingField: 0

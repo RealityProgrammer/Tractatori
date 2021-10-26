@@ -4,11 +4,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-public struct MVector {
+public struct MVector : IEquatable<MVector>, ITractatoriConvertible {
     public static MVector Zero1 = new MVector(0);
     public static MVector Zero2 = new MVector(0, 0);
     public static MVector Zero3 = new MVector(0, 0, 0);
     public static MVector Zero4 = new MVector(0, 0, 0, 0);
+
+    public static MVector QuaternionIdentity = new MVector(0, 0, 0, 1);
 
     [field: SerializeField] public Vector4 Vector { get; set; }
     public float X {
@@ -119,24 +121,24 @@ public struct MVector {
         }
     }
 
+    public static explicit operator MVector(MVectorInt v) {
+        switch (v.Axis) {
+            case 1:
+            default:
+                return new MVector(v.X);
+
+            case 2: return new MVector(v.X, v.Y);
+            case 3: return new MVector(v.X, v.Y, v.Z);
+            case 4: return new MVector(v.X, v.Y, v.Z, v.W);
+        }
+    }
+
     public static implicit operator Vector4(MVector v) {
         return v.Vector;
     }
 
     public static explicit operator MVector(Vector4 v) {
         return new MVector(v);
-    }
-
-    public static MVector ConvertFrom(Vector4 v, int axisCount) {
-        switch (axisCount) {
-            case 1:
-            default:
-                return new MVector(v.x);
-
-            case 2: return new MVector(v.x, v.y);
-            case 3: return new MVector(v.x, v.y, v.z);
-            case 4: return new MVector(v.x, v.y, v.z, v.w);
-        }
     }
 
     public override string ToString() {
@@ -148,6 +150,38 @@ public struct MVector {
             case 2: return "MVector(" + X + ", " + Y + ")";
             case 3: return "MVector(" + X + ", " + Y + ", " + Z + ")";
             case 4: return "MVector(" + X + ", " + Y + ", " + Z + ", " + W + ")";
+        }
+    }
+
+    public bool Equals(MVector other) {
+        return Vector == other.Vector;
+    }
+
+    MVector ITractatoriConvertible.ToMVector() {
+        return this;
+    }
+
+    MVectorInt ITractatoriConvertible.ToMVectorInt() {
+        return (MVectorInt)this;
+    }
+
+    public float this[int i] {
+        get {
+            switch (i) {
+                default: case 0: return X;
+                case 1: return Y;
+                case 2: return Z;
+                case 3: return W;
+            }
+        }
+
+        set {
+            switch (i) {
+                default: case 0: X = value; break;
+                case 1: Y = value; break;
+                case 2: Z = value; break;
+                case 3: W = value; break;
+            }
         }
     }
 }

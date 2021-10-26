@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class BaseSequenceNode : BaseRuntimeNode {
-    [SerializeField, ExcludeInput] private FlowInput _previous, _next;
+    [SerializeField, ExcludeInput] private FlowInput _previous = FlowInput.Null, _next = FlowInput.Null;
 
     public FlowInput Previous {
         get => _previous;

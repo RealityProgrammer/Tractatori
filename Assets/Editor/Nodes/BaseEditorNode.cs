@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor.Experimental.GraphView;
+using UnityEditor;
 
 public class BaseEditorNode : Node
 {
@@ -12,6 +13,8 @@ public class BaseEditorNode : Node
     static BaseEditorNode() {
         _portColorDictionary = new Dictionary<Type, Color>() {
             [typeof(MVector)] = new Color(0f, 0.65f, 1f),
+            [typeof(MVectorInt)] = Color.cyan,
+
             [typeof(string)] = new Color32(0xCE, 0x9D, 0x82, 0xFF),
         };
     }
@@ -40,11 +43,22 @@ public class BaseEditorNode : Node
 
     public BaseRuntimeNode UnderlyingRuntimeNode { get; set; }
 
-    public virtual void Initialize() { }
+    public virtual void Initialize() {
+        title = ObjectNames.NicifyVariableName(UnderlyingRuntimeNode.NodeType.Name);
+    }
 
-    public TractatoriStandardPort GeneratePort(Direction direction, Port.Capacity capacity, Type type) {
-        var port = new TractatoriStandardPort(Orientation.Horizontal, direction, capacity, type);
-        port.portColor = GetPortColor(type);
+    public TractatoriStandardPort GeneratePort(Direction direction, Port.Capacity capacity, Type expectedType) {
+        var port = new TractatoriStandardPort(Orientation.Horizontal, direction, capacity, expectedType);
+        port.portColor = GetPortColor(port.portType);
+        port.ExpectedTypes = new Type[1] { expectedType };
+
+        return port;
+    }
+
+    public TractatoriStandardPort GeneratePort(Direction direction, Port.Capacity capacity, Type[] expectedTypes) {
+        var port = new TractatoriStandardPort(Orientation.Horizontal, direction, capacity, expectedTypes[0]);
+        port.portColor = GetPortColor(port.portType);
+        port.ExpectedTypes = expectedTypes;
 
         return port;
     }

@@ -25,7 +25,7 @@ public class EditorVectorBindablePropertyNode : BaseEditorConstantNode
     }
 
     void RegenerateOutputPort() {
-        var cache = ManipulationUtilities.GetEvaluateCache(UnderlyingRuntimeNode.NodeType);
+        var cache = TractatoriRuntimeUtilities.GetEvaluateCache(UnderlyingRuntimeNode.NodeType);
         var outputParameter = cache.Parameters[1]; // Hardcode second parameter as output
 
         var port = GeneratePort(Direction.Output, Port.Capacity.Multi, typeof(MVector));
