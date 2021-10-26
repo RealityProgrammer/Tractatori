@@ -9,6 +9,8 @@ public static class TractatoriRuntimeUtilities
 {
     // By design, each non-abstract node need an private, non-static Evaluate() method to be able to evaluated
     // Therefore, Reflection need to be used for both dynamically and ease-of-use
+
+    // Also inheritance cannot be used here, at least, not in this version. Rework will be made in the future
     internal static readonly string EvaluateMethodName = "Evaluate";
 
     public class NodeEvaluateCache {
