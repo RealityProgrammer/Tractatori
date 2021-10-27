@@ -71,20 +71,4 @@ public abstract class BaseEditorSequenceNode : BaseEditorNode
             }
         }
     }
-
-    protected void ConnectFlowInputs(GraphLoadInformation container) {
-        var properties = TractatoriEditorUtility.GetAllFlowInputs(UnderlyingRuntimeNode.NodeType);
-
-        foreach (var property in properties) {
-            var flow = (FlowInput)property.Property.GetValue(UnderlyingSequenceNode);
-
-            if (!flow.IsNull()) {
-                if (container.GraphView.TrySearchEditorNode<BaseEditorNode>(flow.GUID, out var find)) {
-                    TractatoriEditorUtility.LinkPort(container.GraphView, find.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), this.Q<TractatoriStandardPort>(property.Property.Name));
-                } else {
-                    property.SetValue(UnderlyingRuntimeNode, FlowInput.Null);
-                }
-            }
-        }
-    }
 }

@@ -17,8 +17,7 @@ public class BaseEditorNode : Node
             [typeof(MVectorInt)] = Color.cyan,
 
             [typeof(string)] = new Color32(0xCE, 0x9D, 0x82, 0xFF),
-            [typeof(Boolean4)] = new Color32(0x9C, 0x00, 0xE5, 0xFF),
-            [typeof(bool)] = new Color32(0xFF, 0x00, 0xDC, 0xFF),
+            [typeof(Boolean4)] = new Color32(0xFF, 0x00, 0xDC, 0xFF),
         };
     }
 
@@ -90,5 +89,23 @@ public class BaseEditorNode : Node
         }
     }
 
-    public virtual void HandleGraphLoad(GraphLoadInformation container) { }
+    protected void ConnectFlowInputs(GraphLoadInformation container) {
+        var properties = TractatoriEditorUtility.GetAllFlowInputs(UnderlyingRuntimeNode.NodeType);
+
+        foreach (var property in properties) {
+            var flow = (FlowInput)property.Property.GetValue(UnderlyingRuntimeNode);
+
+            if (!flow.IsNull()) {
+                if (container.GraphView.TrySearchEditorNode<BaseEditorNode>(flow.GUID, out var find)) {
+                    TractatoriEditorUtility.LinkPort(container.GraphView, find.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), this.Q<TractatoriStandardPort>(property.Property.Name));
+                } else {
+                    property.SetValue(UnderlyingRuntimeNode, FlowInput.Null);
+                }
+            }
+        }
+    }
+
+    public virtual void HandleGraphLoad(GraphLoadInformation container) {
+        ConnectFlowInputs(container);
+    }
 }
