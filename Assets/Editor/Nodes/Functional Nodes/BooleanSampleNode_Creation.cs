@@ -21,6 +21,7 @@ public class BooleanSampleNode_Creation : BaseEditorFunctionalNode {
 
         EnumField axisField = new EnumField("Axis", Node.Axis);
         axisField.style.flexGrow = 1;
+        axisField.SetValueWithoutNotify(Node.Axis);
         axisField.RegisterValueChangedCallback((evt) => {
             Node.Axis = (BooleanSampleNode.SampleAxis)evt.newValue;
         });

@@ -7,7 +7,7 @@ public class BooleanSampleNode : BaseRuntimeNode {
     [field: SerializeField, ExpectedInputType(typeof(Boolean4))]
     public FlowInput Boolean { get; set; }
 
-    public SampleAxis Axis { get; set; }
+    [field: SerializeField] public SampleAxis Axis { get; set; }
 
     public enum SampleAxis { X, Y, Z, W }
 
