@@ -15,11 +15,12 @@ public class ManipulationContainer : ScriptableObject
     #endregion
 
     #region Override Bindable Properties
-    [HideInInspector] public List<ObjectBindableProperty> OverrideObjectBindableProperties { get; set; }
-    [HideInInspector] public List<MVectorBindableProperty> OverrideVectorBindableProperties { get; set; }
+    public List<ObjectBindableProperty> OverrideObjectBindableProperties { get; set; }
+    public List<MVectorBindableProperty> OverrideVectorBindableProperties { get; set; }
     #endregion
 
-    private string CurrentSequenceNode { get; set; }
+    public string CurrentSequenceNode { get; private set; }
+    public string JumpSequenceNode { get; set; }
 
     private NodeEvaluationInfo evaluationInfo;
     public ManipulationContainer() {
@@ -98,9 +99,12 @@ public class ManipulationContainer : ScriptableObject
             return null;
         }
 
-        var @override = overrideProperties.Where(x => x.Name == name).FirstOrDefault();
-        if (@override != null) {
-            return @override;
+        if (original.Overridable) {
+            var @override = overrideProperties.Where(x => x.Name == name).FirstOrDefault();
+
+            if (@override != null) {
+                return @override;
+            }
         }
 
         return original;
@@ -136,7 +140,13 @@ public class ManipulationContainer : ScriptableObject
 
         if (node.IsFinal) yield break;
 
-        CurrentSequenceNode = node.Next.GUID;
+        if (string.IsNullOrEmpty(JumpSequenceNode)) {
+            CurrentSequenceNode = node.Next.GUID;
+        } else {
+            CurrentSequenceNode = JumpSequenceNode;
+            JumpSequenceNode = string.Empty;
+        }
+
         yield return EvaluateCurrentSequenceNode();
     }
 

@@ -15,31 +15,6 @@ public abstract class BaseEditorFunctionalNode : BaseEditorNode {
         contentContainer.Q("contents").style.backgroundColor = (Color)new Color32(46, 46, 46, 205);
     }
 
-    private static readonly Type[] fallbackTypes = new Type[1] { typeof(object) };
-    protected void CreateDefaultInputPorts() {
-        foreach (var property in TractatoriEditorUtility.GetAllFlowInputs(UnderlyingRuntimeNode.NodeType)) {
-            var expectedTypeAttribute = property.GetAttribute<ExpectedInputTypeAttribute>();
-
-            var expectedTypes = expectedTypeAttribute == null ? fallbackTypes : expectedTypeAttribute.Expected;
-
-            var port = GeneratePort(Direction.Input, Port.Capacity.Single, expectedTypes);
-            port.portName = ObjectNames.NicifyVariableName(property.Name);
-            port.name = property.Name;
-            port.portColor = GetPortColor(port.portType);
-
-            var callback = new NodeConnectionCallback() {
-                OnDropCallback = (graphView, edge) => {
-                    var output = edge.output.node as BaseEditorNode;
-
-                    property.SetValue(UnderlyingRuntimeNode, output.UnderlyingRuntimeNode.GUID);
-                }
-            };
-
-            port.AddManipulator(new EdgeConnector<Edge>(callback));
-            inputContainer.Add(port);
-        }
-    }
-
     protected void CreateDefaultOutputPorts() {
         var evaluateCache = TractatoriRuntimeUtilities.GetEvaluateCache(UnderlyingRuntimeNode.NodeType);
         if (evaluateCache == null) {

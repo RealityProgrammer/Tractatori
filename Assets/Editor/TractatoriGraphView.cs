@@ -7,6 +7,7 @@ using UnityEngine.UIElements;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor;
 using UnityEditor.UIElements;
+using System.Collections.ObjectModel;
 
 public class TractatoriGraphView : GraphView
 {
@@ -250,5 +251,52 @@ public class TractatoriGraphView : GraphView
         }
 
         return compatibles;
+    }
+
+    private static List<BaseEditorNode> _allEditorNodes = new List<BaseEditorNode>();
+
+    /// <summary>
+    /// Provide quick access to every editor nodes inside graph on load time. Will be null except load time.
+    /// </summary>
+    public static ReadOnlyCollection<BaseEditorNode> AllEditorNodes {
+        get => new ReadOnlyCollection<BaseEditorNode>(_allEditorNodes);
+    }
+
+    /// <summary>
+    /// Search Editor Node only on Load Time.
+    /// </summary>
+    /// <typeparam name="T">Node Type as Generic</typeparam>
+    /// <param name="guid">Node GUID</param>
+    /// <returns>Editor node type T with the correspond GUID</returns>
+    public bool TrySearchEditorNode<T>(string guid, out T output) where T : BaseEditorNode {
+        if (_allEditorNodes == null) {
+            output = null;
+            return false;
+        }
+
+        for (int i = 0; i < _allEditorNodes.Count; i++) {
+            if (_allEditorNodes[i].IsEntryPoint) continue;
+
+            if (_allEditorNodes[i].UnderlyingRuntimeNode.GUID == guid) {
+                if (_allEditorNodes[i] is T n) {
+                    output = n;
+                    return true;
+                }
+
+                output = null;
+                return false;
+            }
+        }
+
+        output = null;
+        return false;
+    }
+
+    public void BeginLoadGraph() {
+        _allEditorNodes = nodes.ToList().Cast<BaseEditorNode>().ToList();
+    }
+
+    public void FinishLoadGraph() {
+        _allEditorNodes = null;
     }
 }

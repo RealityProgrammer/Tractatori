@@ -10,8 +10,8 @@ public abstract class BaseBindablePropertyDrawer
     public PropertyBindingField Parent { get; private set; }
 
     protected void DoExposedField(VisualElement container) {
-        Toggle toggle = new Toggle("Exposed");
-        toggle.SetValueWithoutNotify(Parent.Property.Exposed);
+        Toggle toggle = new Toggle("Overridable");
+        toggle.SetValueWithoutNotify(Parent.Property.Overridable);
         toggle.RegisterValueChangedCallback(ExposedModifyCallback);
 
         toggle.Q<Label>(className: "unity-text-element").style.flexGrow = 1;
@@ -21,7 +21,7 @@ public abstract class BaseBindablePropertyDrawer
     }
 
     protected virtual void ExposedModifyCallback(ChangeEvent<bool> evt) {
-        Parent.Property.Exposed = evt.newValue;
+        Parent.Property.Overridable = evt.newValue;
     }
 
     protected void ModifyLabel(VisualElement element, string labelClass = "unity-label", float width = 20) {

@@ -131,6 +131,13 @@ public class NodeSearchWindow : ScriptableObject, ISearchWindowProvider {
             level = 3,
         });
 
+        searchTree.Add(new SearchTreeEntry(new GUIContent("Boolean", indent)) {
+            userData = new ConstantNodeCreationRequest() {
+                UnderlyingNodeType = typeof(Boolean4ValueNode),
+            },
+            level = 3,
+        });
+
         foreach (var hs in pathGroup) {
             hs.Clear();
         }

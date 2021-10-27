@@ -8,6 +8,7 @@ using UnityEditor.Callbacks;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
+using System.Collections.ObjectModel;
 
 public class TractatoriGraphEditorWindow : EditorWindow
 {
@@ -137,6 +138,7 @@ public class TractatoriGraphEditorWindow : EditorWindow
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
     }
+
     private void LoadGraph() {
         Debug.Log("Loading Graph...");
 
@@ -174,48 +176,57 @@ public class TractatoriGraphEditorWindow : EditorWindow
 
         while (_graphView.HandleNodeEmitRequests()) { }
 
-        var nodes = _graphView.nodes.ToList().Cast<BaseEditorNode>().ToList(); // Shut up, I use Linq for prototyping
-        var sequenceNodes = nodes.Where(x => x is DynamicEditorSequenceNode).Cast<DynamicEditorSequenceNode>().ToList();
-        var nonSequenceNodes = nodes.Where(x => !x.IsEntryPoint && !(x is DynamicEditorSequenceNode)).ToList();
+        _graphView.BeginLoadGraph();
 
-        foreach (var node in nonSequenceNodes) {
-            if (node.IsEntryPoint) continue;
-            if (node.UnderlyingRuntimeNode == null) {
-                Debug.LogWarning("An editor node with null runtime node discovered. This shouldn't happened.");
-                continue;
-            }
-
-            var properties = TractatoriEditorUtility.GetAllFlowInputs(node.UnderlyingRuntimeNode.NodeType);
-
-            foreach (var property in properties) {
-                FlowInput flow = (FlowInput)property.GetValue(node.UnderlyingRuntimeNode);
-
-                if (!string.IsNullOrEmpty(flow.GUID)) {
-                    var findNode = FindEditorNode(nodes, flow.GUID);
-
-                    if (findNode != null) {
-                        var inputPort = node.Q<TractatoriStandardPort>(property.Name);
-                        var outputPort = findNode.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First();
-
-                        TractatoriEditorUtility.LinkPort(_graphView, outputPort, inputPort);
-                    }
-                }
+        if (CurrentEditingAsset.EntrySequence.GuidValid()) {
+            if (_graphView.TrySearchEditorNode<BaseEditorNode>(CurrentEditingAsset.EntrySequence, out var entryNode)) {
+                TractatoriEditorUtility.LinkPort(_graphView, _graphView.EntryNode.Q<TractatoriStandardPort>("output-port"), entryNode.Q<TractatoriStandardPort>(BaseEditorSequenceNode.PreviousPortName));
             }
         }
 
-        ConnectAllSequenceNodes(sequenceNodes, nodes);
+        var info = new GraphLoadInformation(CurrentEditingAsset, _graphView);
 
-        Debug.Log("Finish Loading Graph");
-    }
+        _graphView.nodes.ForEach(baseNode => {
+            BaseEditorNode editorNode = baseNode as BaseEditorNode;
 
-    BaseEditorNode FindEditorNode<T>(List<T> allNodes, string guid) where T : BaseEditorNode {
-        for (int i = 0; i < allNodes.Count; i++) {
-            if (allNodes[i].IsEntryPoint) continue;
+            if (editorNode.IsEntryPoint) return;
 
-            if (allNodes[i].UnderlyingRuntimeNode.GUID == guid) return allNodes[i];
-        }
+            editorNode.HandleGraphLoad(info);
+        });
 
-        return null;
+        //var sequenceNodes = nodes.Where(x => x is DynamicEditorSequenceNode).Cast<DynamicEditorSequenceNode>().ToList();
+        //var nonSequenceNodes = nodes.Where(x => !x.IsEntryPoint && !(x is DynamicEditorSequenceNode)).ToList();
+
+        //foreach (var node in nonSequenceNodes) {
+        //    if (node.IsEntryPoint) continue;
+        //    if (node.UnderlyingRuntimeNode == null) {
+        //        Debug.LogWarning("An editor node with null runtime node discovered. This shouldn't happened.");
+        //        continue;
+        //    }
+
+        //    var properties = TractatoriEditorUtility.GetAllFlowInputs(node.UnderlyingRuntimeNode.NodeType);
+
+        //    foreach (var property in properties) {
+        //        FlowInput flow = (FlowInput)property.GetValue(node.UnderlyingRuntimeNode);
+
+        //        if (!string.IsNullOrEmpty(flow.GUID)) {
+        //            var findNode = FindEditorNode(nodes, flow.GUID);
+
+        //            if (findNode != null) {
+        //                var inputPort = node.Q<TractatoriStandardPort>(property.Name);
+        //                var outputPort = findNode.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First();
+
+        //                TractatoriEditorUtility.LinkPort(_graphView, outputPort, inputPort);
+        //            }
+        //        }
+        //    }
+        //}
+
+        //ConnectAllSequenceNodes(sequenceNodes, nodes);
+
+        //Debug.Log("Finish Loading Graph");
+
+        _graphView.FinishLoadGraph();
     }
 
     void ConnectAllSequenceNodes(List<DynamicEditorSequenceNode> sequenceNodes, List<BaseEditorNode> allNodes) {
@@ -234,9 +245,7 @@ public class TractatoriGraphEditorWindow : EditorWindow
                 var flow = (FlowInput)property.Property.GetValue(sn.UnderlyingSequenceNode);
 
                 if (!string.IsNullOrEmpty(flow.GUID)) {
-                    var find = FindEditorNode(allNodes, flow.GUID);
-
-                    if (find != null) {
+                    if (_graphView.TrySearchEditorNode<BaseEditorNode>(flow.GUID, out var find)) {
                         TractatoriEditorUtility.LinkPort(_graphView, find.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), sn.Q<TractatoriStandardPort>(property.Property.Name));
                     } else {
                         property.SetValue(sn.UnderlyingRuntimeNode, FlowInput.Null);

@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-[DrawerForConstantNode(typeof(StringValueNode))]
+[DrawerForNode(typeof(StringValueNode))]
 public class EditorStringValueNode : BaseEditorConstantNode {
     public override void Initialize() {
         title = "String Constant Node";

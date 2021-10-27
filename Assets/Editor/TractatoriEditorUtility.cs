@@ -66,8 +66,8 @@ public static class TractatoriEditorUtility {
         }
     }
 
-    public static void LinkSequenceNodes(TractatoriGraphView graphView, DynamicEditorSequenceNode input, DynamicEditorSequenceNode output) {
-        LinkPort(graphView, input.Q<TractatoriStandardPort>(DynamicEditorSequenceNode.NextPortName), output.Q<TractatoriStandardPort>(DynamicEditorSequenceNode.PreviousPortName));
+    public static void LinkSequenceNodes(TractatoriGraphView graphView, BaseEditorSequenceNode input, BaseEditorSequenceNode output) {
+        LinkPort(graphView, input.Q<TractatoriStandardPort>(BaseEditorSequenceNode.NextPortName), output.Q<TractatoriStandardPort>(BaseEditorSequenceNode.PreviousPortName));
     }
 
     public static void LinkPort(TractatoriGraphView graphView, TractatoriStandardPort output, TractatoriStandardPort input) {
@@ -80,5 +80,9 @@ public static class TractatoriEditorUtility {
         edge.output.Connect(edge);
 
         graphView.Add(edge);
+    }
+
+    public static bool GuidValid(this string guid) {
+        return !string.IsNullOrEmpty(guid) && guid != "00000000-0000-0000-0000-000000000000";
     }
 }

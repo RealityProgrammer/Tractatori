@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-[FunctionalNodeCreation(typeof(VectorAxisSwapNode))]
+[DrawerForNode(typeof(VectorAxisSwapNode))]
 public class VectorAxisSwapNode_Creation : BaseEditorFunctionalNode
 {
     private VectorAxisSwapNode Node {

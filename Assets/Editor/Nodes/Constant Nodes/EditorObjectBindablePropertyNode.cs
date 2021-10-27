@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEditor.Experimental.GraphView;
 
-[DrawerForConstantNode(typeof(ObjectBindablePropertyNode))]
+[DrawerForNode(typeof(ObjectBindablePropertyNode))]
 public class EditorObjectBindablePropertyNode : BaseEditorConstantNode
 {
     public override void Initialize() {

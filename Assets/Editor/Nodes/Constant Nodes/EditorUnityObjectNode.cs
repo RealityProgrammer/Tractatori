@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using UnityEditor;
 
-[DrawerForConstantNode(typeof(UnityObjectNode))]
+[DrawerForNode(typeof(UnityObjectNode))]
 public class EditorUnityObjectNode : BaseEditorConstantNode
 {
     public ObjectField Field { get; private set; }

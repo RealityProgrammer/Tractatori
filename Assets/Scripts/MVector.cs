@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-public struct MVector : IEquatable<MVector>, ITractatoriConvertible {
+public struct MVector : ITractatoriConvertible {
     public static MVector Zero1 = new MVector(0);
     public static MVector Zero2 = new MVector(0, 0);
     public static MVector Zero3 = new MVector(0, 0, 0);
@@ -183,5 +183,65 @@ public struct MVector : IEquatable<MVector>, ITractatoriConvertible {
                 case 3: W = value; break;
             }
         }
+    }
+
+    public static Boolean4 operator<(MVector lhs, MVector rhs) {
+        return new Boolean4(
+            lhs.Vector.x < rhs.Vector.x,
+            lhs.Vector.y < rhs.Vector.y,
+            lhs.Vector.z < rhs.Vector.z,
+            lhs.Vector.w < rhs.Vector.w);
+    }
+
+    public static Boolean4 operator >(MVector lhs, MVector rhs) {
+        return new Boolean4(
+            lhs.Vector.x > rhs.Vector.x,
+            lhs.Vector.y > rhs.Vector.y,
+            lhs.Vector.z > rhs.Vector.z,
+            lhs.Vector.w > rhs.Vector.w);
+    }
+
+    public static Boolean4 operator <=(MVector lhs, MVector rhs) {
+        return new Boolean4(
+            lhs.Vector.x <= rhs.Vector.x,
+            lhs.Vector.y <= rhs.Vector.y,
+            lhs.Vector.z <= rhs.Vector.z,
+            lhs.Vector.w <= rhs.Vector.w);
+    }
+
+    public static Boolean4 operator >=(MVector lhs, MVector rhs) {
+        return new Boolean4(
+            lhs.Vector.x >= rhs.Vector.x,
+            lhs.Vector.y >= rhs.Vector.y,
+            lhs.Vector.z >= rhs.Vector.z,
+            lhs.Vector.w >= rhs.Vector.w);
+    }
+
+    public static Boolean4 operator !=(MVector lhs, MVector rhs) {
+        return new Boolean4(
+            lhs.Vector.x != rhs.Vector.x,
+            lhs.Vector.y != rhs.Vector.y,
+            lhs.Vector.z != rhs.Vector.z,
+            lhs.Vector.w != rhs.Vector.w);
+    }
+
+    public static Boolean4 operator ==(MVector lhs, MVector rhs) {
+        return new Boolean4(
+            lhs.Vector.x == rhs.Vector.x,
+            lhs.Vector.y == rhs.Vector.y,
+            lhs.Vector.z == rhs.Vector.z,
+            lhs.Vector.w == rhs.Vector.w);
+    }
+
+    public override bool Equals(object obj) {
+        if (obj is MVector v) {
+            return (v == this).All();
+        }
+
+        return false;
+    }
+
+    public override int GetHashCode() {
+        return Vector.GetHashCode() | (Axis << 5);
     }
 }

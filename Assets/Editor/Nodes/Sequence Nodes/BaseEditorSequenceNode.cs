@@ -1,16 +1,16 @@
-﻿using System.Linq;
-using System.Reflection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor.UIElements;
 using UnityEngine.UIElements;
-using UnityEditor.Experimental.GraphView;
 using UnityEditor;
+using UnityEditor.Experimental.GraphView;
 
-public class DynamicEditorSequenceNode : DynamicEditorFunctionalNode {
+public abstract class BaseEditorSequenceNode : BaseEditorNode
+{
     public const string PreviousPortName = "previous-sequence";
     public const string NextPortName = "next-sequence";
+
+    protected static readonly Type SequenceNodeType = typeof(BaseSequenceNode);
 
     public BaseSequenceNode UnderlyingSequenceNode {
         get => UnderlyingRuntimeNode as BaseSequenceNode;
@@ -23,16 +23,8 @@ public class DynamicEditorSequenceNode : DynamicEditorFunctionalNode {
         }
     }
 
-    public override void Initialize() {
-        title = ObjectNames.NicifyVariableName(UnderlyingRuntimeNode.NodeType.Name);
-
-        GenerateSequencePorts();
-
-        base.Initialize();
-    }
-
-    private void GenerateSequencePorts() {
-        var previousSequencePort = GeneratePort(Direction.Input, Port.Capacity.Single, typeof(BaseSequenceNode));
+    protected void GenerateSequencePorts() {
+        var previousSequencePort = GeneratePort(Direction.Input, Port.Capacity.Single, SequenceNodeType);
         previousSequencePort.portName = "Previous";
         previousSequencePort.name = PreviousPortName;
         var callback = new NodeConnectionCallback();
@@ -51,7 +43,7 @@ public class DynamicEditorSequenceNode : DynamicEditorFunctionalNode {
         previousSequencePort.AddManipulator(new EdgeConnector<Edge>(callback));
         inputContainer.Add(previousSequencePort);
 
-        var nextSequencePort = GeneratePort(Direction.Output, Port.Capacity.Single, typeof(BaseSequenceNode));
+        var nextSequencePort = GeneratePort(Direction.Output, Port.Capacity.Single, SequenceNodeType);
         nextSequencePort.portName = "Next";
         nextSequencePort.name = NextPortName;
         callback = new NodeConnectionCallback();
@@ -65,5 +57,34 @@ public class DynamicEditorSequenceNode : DynamicEditorFunctionalNode {
 
         nextSequencePort.AddManipulator(new EdgeConnector<Edge>(callback));
         outputContainer.Add(nextSequencePort);
+    }
+
+    public override void HandleGraphLoad(GraphLoadInformation container) {
+        ConnectNextSequence(container);
+        ConnectFlowInputs(container);
+    }
+
+    protected void ConnectNextSequence(GraphLoadInformation container) {
+        if (!UnderlyingSequenceNode.Next.IsNull()) {
+            if (container.GraphView.TrySearchEditorNode<BaseEditorSequenceNode>(UnderlyingSequenceNode.Next.GUID, out var next)) {
+                TractatoriEditorUtility.LinkSequenceNodes(container.GraphView, this, next);
+            }
+        }
+    }
+
+    protected void ConnectFlowInputs(GraphLoadInformation container) {
+        var properties = TractatoriEditorUtility.GetAllFlowInputs(UnderlyingRuntimeNode.NodeType);
+
+        foreach (var property in properties) {
+            var flow = (FlowInput)property.Property.GetValue(UnderlyingSequenceNode);
+
+            if (!flow.IsNull()) {
+                if (container.GraphView.TrySearchEditorNode<BaseEditorNode>(flow.GUID, out var find)) {
+                    TractatoriEditorUtility.LinkPort(container.GraphView, find.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), this.Q<TractatoriStandardPort>(property.Property.Name));
+                } else {
+                    property.SetValue(UnderlyingRuntimeNode, FlowInput.Null);
+                }
+            }
+        }
     }
 }

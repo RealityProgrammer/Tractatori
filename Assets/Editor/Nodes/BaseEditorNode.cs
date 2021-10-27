@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor;
 
@@ -16,6 +17,8 @@ public class BaseEditorNode : Node
             [typeof(MVectorInt)] = Color.cyan,
 
             [typeof(string)] = new Color32(0xCE, 0x9D, 0x82, 0xFF),
+            [typeof(Boolean4)] = new Color32(0x9C, 0x00, 0xE5, 0xFF),
+            [typeof(bool)] = new Color32(0xFF, 0x00, 0xDC, 0xFF),
         };
     }
 
@@ -62,4 +65,30 @@ public class BaseEditorNode : Node
 
         return port;
     }
+
+    protected static readonly Type[] fallbackTypes = new Type[1] { typeof(object) };
+    protected void CreateDefaultInputPorts() {
+        foreach (var property in TractatoriEditorUtility.GetAllFlowInputs(UnderlyingRuntimeNode.NodeType)) {
+            var expectedTypeAttribute = property.GetAttribute<ExpectedInputTypeAttribute>();
+            var expectedTypes = expectedTypeAttribute == null ? fallbackTypes : expectedTypeAttribute.Expected;
+
+            var port = GeneratePort(Direction.Input, Port.Capacity.Single, expectedTypes);
+            port.portName = ObjectNames.NicifyVariableName(property.Name);
+            port.name = property.Name;
+            port.portColor = GetPortColor(port.portType);
+
+            var callback = new NodeConnectionCallback() {
+                OnDropCallback = (graphView, edge) => {
+                    var output = edge.output.node as BaseEditorNode;
+
+                    property.SetValue(UnderlyingRuntimeNode, output.UnderlyingRuntimeNode.GUID);
+                }
+            };
+
+            port.AddManipulator(new EdgeConnector<Edge>(callback));
+            inputContainer.Add(port);
+        }
+    }
+
+    public virtual void HandleGraphLoad(GraphLoadInformation container) { }
 }

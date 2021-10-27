@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-public struct MVectorInt : IEquatable<MVectorInt>, ITractatoriConvertible {
+public struct MVectorInt : ITractatoriConvertible {
     public static MVectorInt Zero1 = new MVectorInt(0);
     public static MVectorInt Zero2 = new MVectorInt(0, 0);
     public static MVectorInt Zero3 = new MVectorInt(0, 0, 0);
@@ -138,10 +138,6 @@ public struct MVectorInt : IEquatable<MVectorInt>, ITractatoriConvertible {
         }
     }
 
-    public bool Equals(MVectorInt other) {
-        return X == other.X && Y == other.Y && Z == other.Z && W == other.W;
-    }
-
     MVector ITractatoriConvertible.ToMVector() {
         return (MVector)this;
     }
@@ -168,5 +164,68 @@ public struct MVectorInt : IEquatable<MVectorInt>, ITractatoriConvertible {
                 case 3: W = value; break;
             }
         }
+    }
+
+    public static Boolean4 operator <(MVectorInt lhs, MVectorInt rhs) {
+        return new Boolean4(
+            lhs.X < rhs.X,
+            lhs.Y < rhs.Y,
+            lhs.Z < rhs.Z,
+            lhs.W < rhs.W);
+    }
+
+    public static Boolean4 operator >(MVectorInt lhs, MVectorInt rhs) {
+        return new Boolean4(
+            lhs.X > rhs.X,
+            lhs.Y > rhs.Y,
+            lhs.Z > rhs.Z,
+            lhs.W > rhs.W);
+    }
+
+    public static Boolean4 operator <=(MVectorInt lhs, MVectorInt rhs) {
+        return new Boolean4(
+            lhs.X <= rhs.X,
+            lhs.Y <= rhs.Y,
+            lhs.Z <= rhs.Z,
+            lhs.W <= rhs.W);
+    }
+
+    public static Boolean4 operator >=(MVectorInt lhs, MVectorInt rhs) {
+        return new Boolean4(
+            lhs.X >= rhs.X,
+            lhs.Y >= rhs.Y,
+            lhs.Z >= rhs.Z,
+            lhs.W >= rhs.W);
+    }
+
+    public static Boolean4 operator !=(MVectorInt lhs, MVectorInt rhs) {
+        return new Boolean4(
+            lhs.X != rhs.X,
+            lhs.Y != rhs.Y,
+            lhs.Z != rhs.Z,
+            lhs.W != rhs.W);
+    }
+
+    public static Boolean4 operator ==(MVectorInt lhs, MVectorInt rhs) {
+        return new Boolean4(
+            lhs.X == rhs.X,
+            lhs.Y == rhs.Y,
+            lhs.Z == rhs.Z,
+            lhs.W == rhs.W);
+    }
+
+    public override bool Equals(object obj) {
+        if (obj is MVectorInt v) {
+            return (v == this).All();
+        }
+
+        return false;
+    }
+
+    public override int GetHashCode() {
+        var yHash = Y.GetHashCode();
+        var zHash = Z.GetHashCode();
+        var wHash = W.GetHashCode();
+        return X.GetHashCode() ^ (yHash << 4) ^ (yHash >> 28) ^ (zHash >> 4) ^ (zHash << 28) ^ (wHash >> 3) ^ (wHash << 17);
     }
 }
