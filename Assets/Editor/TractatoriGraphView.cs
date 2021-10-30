@@ -246,6 +246,8 @@ public class TractatoriGraphView : GraphView
 
                 }
             });
+
+            EditorApplication.Beep();
             Debug.LogWarning("Connection from Input ports are currently being constructed");
         }
 

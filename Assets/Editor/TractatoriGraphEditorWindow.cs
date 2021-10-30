@@ -27,7 +27,7 @@ public class TractatoriGraphEditorWindow : EditorWindow
     public static bool OnOpenAsset(int instanceID, int line) {
         if (Selection.activeObject is ManipulationContainer container) {
             if (!HasOpenInstances<TractatoriGraphEditorWindow>()) {
-                WindowInstance = GetWindow<TractatoriGraphEditorWindow>("Story Tailor Graph");
+                WindowInstance = GetWindow<TractatoriGraphEditorWindow>("Tractatori Graph");
 
                 OriginalAsset = container;
                 CurrentEditingAsset = Instantiate(container);

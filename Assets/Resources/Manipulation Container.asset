@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0afde2d84bee2304bbef3c3e030d79a5, type: 3}
-  m_Name: Manipulation Container
+  m_Name: Manipulation Container(Clone)
   m_EditorClassIdentifier: 
   <EntrySequence>k__BackingField: 00000000-0000-0000-0000-000000000000
-  <NodeContainer>k__BackingField: []
+  <NodeContainer>k__BackingField:
+  - {fileID: 456178523466450390}
   <ObjectBindableProperties>k__BackingField:
   - <Name>k__BackingField: 1
     <Overridable>k__BackingField: 0
@@ -35,3 +36,21 @@ MonoBehaviour:
       <B2>k__BackingField: 0
       <B3>k__BackingField: 1
       <B4>k__BackingField: 1
+--- !u!114 &456178523466450390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab5962830e9f6e442aaa86578d133e38, type: 3}
+  m_Name: 818aa620-7a49-4c00-b0ce-44ebc6de1c61
+  m_EditorClassIdentifier: 
+  <GUID>k__BackingField: 818aa620-7a49-4c00-b0ce-44ebc6de1c61
+  <NodePosition>k__BackingField: {x: 188, y: 46}
+  <InputObject>k__BackingField:
+    <GUID>k__BackingField: 00000000-0000-0000-0000-000000000000
+    <OutputIndex>k__BackingField: 0
+  <TypeString>k__BackingField: 
