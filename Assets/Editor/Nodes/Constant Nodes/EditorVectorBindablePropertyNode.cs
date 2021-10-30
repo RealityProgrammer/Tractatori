@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+﻿using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,19 +38,12 @@ public class EditorVectorBindablePropertyNode : BaseEditorConstantNode
                 var inputPort = edge.input as TractatoriStandardPort;
                 var inputNode = inputPort.node as BaseEditorNode;
 
-                var underlyingNodeType = inputNode.UnderlyingRuntimeNode.NodeType;
+                var property = TractatoriEditorUtility.GetAllFlowInputs(inputNode.UnderlyingRuntimeNode.NodeType).FirstOrDefault(x => x.Name == inputPort.name);
 
-                FieldInfo field = underlyingNodeType.GetField(inputPort.name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
-                if (field != null) {
-                    field.SetValue(inputNode.UnderlyingRuntimeNode, new FlowInput(UnderlyingRuntimeNode.GUID));
+                if (property != null) {
+                    property.SetValue(inputNode.UnderlyingRuntimeNode, new FlowInput(UnderlyingRuntimeNode.GUID));
                 } else {
-                    PropertyInfo info = underlyingNodeType.GetProperty(inputPort.name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-                    if (info != null) {
-                        info.SetValue(inputNode.UnderlyingRuntimeNode, new FlowInput(UnderlyingRuntimeNode.GUID));
-                    } else {
-                        Debug.Log("Wat");
-                    }
+                    Debug.Log("Wat");
                 }
             },
         };

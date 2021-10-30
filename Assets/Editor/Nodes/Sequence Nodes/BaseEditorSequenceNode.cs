@@ -24,7 +24,7 @@ public abstract class BaseEditorSequenceNode : BaseEditorNode
     }
 
     protected void GenerateSequencePorts() {
-        var previousSequencePort = GeneratePort(Direction.Input, Port.Capacity.Single, SequenceNodeType);
+        var previousSequencePort = GeneratePort(Direction.Input, Port.Capacity.Multi, SequenceNodeType);
         previousSequencePort.portName = "Previous";
         previousSequencePort.name = PreviousPortName;
         var callback = new NodeConnectionCallback();
@@ -35,7 +35,6 @@ public abstract class BaseEditorSequenceNode : BaseEditorNode
             if (output.IsEntryPoint) {
                 TractatoriGraphEditorWindow.CurrentEditingAsset.EntrySequence = input.UnderlyingRuntimeNode.GUID;
             } else {
-                ((BaseSequenceNode)input.UnderlyingRuntimeNode).Previous = new FlowInput(output.UnderlyingRuntimeNode.GUID);
                 ((BaseSequenceNode)output.UnderlyingRuntimeNode).Next = new FlowInput(input.UnderlyingRuntimeNode.GUID);
             }
         };
@@ -51,7 +50,6 @@ public abstract class BaseEditorSequenceNode : BaseEditorNode
             BaseEditorNode output = edge.output.node as BaseEditorNode;
             BaseEditorNode input = edge.input.node as BaseEditorNode;
 
-            ((BaseSequenceNode)input.UnderlyingRuntimeNode).Previous = new FlowInput(output.UnderlyingRuntimeNode.GUID);
             ((BaseSequenceNode)output.UnderlyingRuntimeNode).Next = new FlowInput(input.UnderlyingRuntimeNode.GUID);
         };
 

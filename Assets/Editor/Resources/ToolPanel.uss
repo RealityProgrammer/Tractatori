@@ -1,0 +1,12 @@
+﻿.tractatori-tool-panel {
+	--resizer-texture: resource("Resizer");
+	background-color: #3C3C3C;
+	flex-grow: 1;
+	width: 300px;
+	border-right-color: #232323;
+	border-right-width: 1px;
+}
+
+.resizer-border {
+	cursor: resize-horizontal;
+}

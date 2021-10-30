@@ -6,10 +6,10 @@ using UnityEngine;
 public class BranchingNode : BaseSequenceNode
 {
     [field: SerializeField, ExpectedInputType(typeof(Boolean4))]
-    public FlowInput Predicate { get; set; }
+    public FlowInput Predicate { get; set; } = FlowInput.Null;
 
     [field: SerializeField, ExcludeInput]
-    public FlowInput False { get; set; }
+    public FlowInput False { get; set; } = FlowInput.Null;
 
     private void Evaluate(NodeEvaluationInfo info) {
         if (Predicate.IsNull() || False.IsNull()) return;

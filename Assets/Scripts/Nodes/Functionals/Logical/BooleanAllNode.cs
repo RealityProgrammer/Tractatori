@@ -6,7 +6,7 @@ using UnityEngine;
 public class BooleanAllNode : BaseRuntimeNode
 {
     [field: SerializeField, ExpectedInputType(typeof(Boolean4))]
-    public FlowInput Boolean { get; set; }
+    public FlowInput Boolean { get; set; } = FlowInput.Null;
 
     private void Evaluate(NodeEvaluationInfo info, [OutputLayoutIndex(0)] out Boolean4 output) {
         if (Boolean.IsNull()) {

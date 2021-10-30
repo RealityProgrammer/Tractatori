@@ -5,7 +5,7 @@ using UnityEngine;
 [CustomizeSearchPath("Functionals/Logical/Boolean Sample Node")]
 public class BooleanSampleNode : BaseRuntimeNode {
     [field: SerializeField, ExpectedInputType(typeof(Boolean4))]
-    public FlowInput Boolean { get; set; }
+    public FlowInput Boolean { get; set; } = FlowInput.Null;
 
     [field: SerializeField] public SampleAxis Axis { get; set; }
 

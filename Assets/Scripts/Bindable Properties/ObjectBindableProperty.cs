@@ -6,8 +6,4 @@ using UnityEngine;
 [BindingPropertyType(typeof(UnityEngine.Object))]
 public class ObjectBindableProperty : BaseBindableProperty {
     [field: SerializeField] public UnityEngine.Object Value { get; set; }
-
-    public override object GetValue() {
-        return Value;
-    }
 }

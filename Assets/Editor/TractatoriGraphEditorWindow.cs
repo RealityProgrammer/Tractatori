@@ -15,7 +15,7 @@ public class TractatoriGraphEditorWindow : EditorWindow
     public const string ObjectBindablePropertyUserData = "Object";
     public const string VectorBindablePropertyUserData = "Vector";
 
-    private TractatoriGraphView _graphView;
+    public TractatoriGraphView GraphView { get; private set; }
 
     public static ManipulationContainer OriginalAsset { get; private set; }
     public static ManipulationContainer CurrentEditingAsset { get; private set; }
@@ -47,7 +47,7 @@ public class TractatoriGraphEditorWindow : EditorWindow
     private void OnEnable() {
         ConstructGraphView();
         ConstructToolbar();
-        ConstructBlackboard();
+        ConstructSubWindow();
     }
 
     private void Update() {
@@ -55,17 +55,17 @@ public class TractatoriGraphEditorWindow : EditorWindow
             Close();
             return;
         }
-        _graphView.Update();
+        GraphView.Update();
     }
 
     private void ConstructGraphView() {
-        _graphView = new TractatoriGraphView() {
+        GraphView = new TractatoriGraphView() {
             name = "Graph View",
         };
-        _graphView.Initialize(this);
+        GraphView.Initialize(this);
 
-        _graphView.StretchToParentSize();
-        rootVisualElement.Add(_graphView);
+        GraphView.StretchToParentSize();
+        rootVisualElement.Add(GraphView);
     }
 
     private void ConstructToolbar() {
@@ -79,30 +79,27 @@ public class TractatoriGraphEditorWindow : EditorWindow
         rootVisualElement.Add(toolbar);
     }
 
-    public TBlackboardWrapper BlackboardWrapper { get; private set; }
-    private void ConstructBlackboard() {
-        BlackboardWrapper = new TBlackboardWrapper(_graphView, this);
+    private TractatoriToolPanelElement _toolPanel;
+    private void ConstructSubWindow() {
+        _toolPanel = new TractatoriToolPanelElement(rootVisualElement);
+        rootVisualElement.Add(_toolPanel);
     }
 
     public void CreateObjectBindableProperty(ObjectBindableProperty property) {
         CurrentEditingAsset.ObjectBindableProperties.Add(property);
 
-        CreateFieldForBindableProperty(property).Field.userData = ObjectBindablePropertyUserData;
+        //CreateFieldForBindableProperty(property).Field.userData = ObjectBindablePropertyUserData;
     }
 
     public void CreateVectorBindableProperty(MVectorBindableProperty property) {
         CurrentEditingAsset.VectorBindableProperties.Add(property);
 
-        CreateFieldForBindableProperty(property).Field.userData = VectorBindablePropertyUserData;
-    }
-
-    public PropertyBindingField CreateFieldForBindableProperty(BaseBindableProperty property) {
-        return new PropertyBindingField(property, BlackboardWrapper.Blackboard);
+        //CreateFieldForBindableProperty(property).Field.userData = VectorBindablePropertyUserData;
     }
 
     private void SaveGraph() {
         List<Node> nodes = new List<Node>();
-        _graphView.nodes.ToList(nodes);
+        GraphView.nodes.ToList(nodes);
 
         CurrentEditingAsset.NodeContainer.Clear();
         CurrentEditingAsset.NodeContainer.Capacity = nodes.Count - 1;
@@ -142,22 +139,20 @@ public class TractatoriGraphEditorWindow : EditorWindow
     private void LoadGraph() {
         Debug.Log("Loading Graph...");
 
-        BlackboardWrapper.GenerateFields();
-
         var container = CurrentEditingAsset.NodeContainer;
         for (int i = 0; i < container.Count; i++) {
             var runtimeNode = container[i];
 
             switch (runtimeNode) {
                 case IConstantValueNode cn:
-                    _graphView.NodeEmitter.EnqueueRequest(new ConstantNodeCreationRequest() {
+                    GraphView.NodeEmitter.EnqueueRequest(new ConstantNodeCreationRequest() {
                         ExistInstance = Instantiate(runtimeNode),
                         Position = runtimeNode.NodePosition,
                     });
                     break;
 
                 case BaseSequenceNode sn:
-                    _graphView.NodeEmitter.EnqueueRequest(new SequenceNodeCreationRequest() {
+                    GraphView.NodeEmitter.EnqueueRequest(new SequenceNodeCreationRequest() {
                         ExistInstance = Instantiate(runtimeNode),
                         Position = runtimeNode.NodePosition,
                     });
@@ -166,7 +161,7 @@ public class TractatoriGraphEditorWindow : EditorWindow
                 default:
                     if (runtimeNode == null) break;
 
-                    _graphView.NodeEmitter.EnqueueRequest(new FunctionalNodeCreationRequest() {
+                    GraphView.NodeEmitter.EnqueueRequest(new FunctionalNodeCreationRequest() {
                         ExistInstance = Instantiate(runtimeNode),
                         Position = runtimeNode.NodePosition,
                     });
@@ -174,19 +169,19 @@ public class TractatoriGraphEditorWindow : EditorWindow
             }
         }
 
-        while (_graphView.HandleNodeEmitRequests()) { }
+        while (GraphView.HandleNodeEmitRequests()) { }
 
-        _graphView.BeginLoadGraph();
+        GraphView.BeginLoadGraph();
 
         if (CurrentEditingAsset.EntrySequence.GuidValid()) {
-            if (_graphView.TrySearchEditorNode<BaseEditorNode>(CurrentEditingAsset.EntrySequence, out var entryNode)) {
-                TractatoriEditorUtility.LinkPort(_graphView, _graphView.EntryNode.Q<TractatoriStandardPort>("output-port"), entryNode.Q<TractatoriStandardPort>(BaseEditorSequenceNode.PreviousPortName));
+            if (GraphView.TrySearchEditorNode<BaseEditorNode>(CurrentEditingAsset.EntrySequence, out var entryNode)) {
+                TractatoriEditorUtility.LinkPort(GraphView, GraphView.EntryNode.Q<TractatoriStandardPort>("output-port"), entryNode.Q<TractatoriStandardPort>(BaseEditorSequenceNode.PreviousPortName));
             }
         }
 
-        var info = new GraphLoadInformation(CurrentEditingAsset, _graphView);
+        var info = new GraphLoadInformation(CurrentEditingAsset, GraphView);
 
-        _graphView.nodes.ForEach(baseNode => {
+        GraphView.nodes.ForEach(baseNode => {
             BaseEditorNode editorNode = baseNode as BaseEditorNode;
 
             if (editorNode.IsEntryPoint) return;
@@ -194,39 +189,11 @@ public class TractatoriGraphEditorWindow : EditorWindow
             editorNode.HandleGraphLoad(info);
         });
 
-        //var sequenceNodes = nodes.Where(x => x is DynamicEditorSequenceNode).Cast<DynamicEditorSequenceNode>().ToList();
-        //var nonSequenceNodes = nodes.Where(x => !x.IsEntryPoint && !(x is DynamicEditorSequenceNode)).ToList();
+        GraphView.FinishLoadGraph();
 
-        //foreach (var node in nonSequenceNodes) {
-        //    if (node.IsEntryPoint) continue;
-        //    if (node.UnderlyingRuntimeNode == null) {
-        //        Debug.LogWarning("An editor node with null runtime node discovered. This shouldn't happened.");
-        //        continue;
-        //    }
+        _toolPanel.InitializeAllBindablePropertyFields();
 
-        //    var properties = TractatoriEditorUtility.GetAllFlowInputs(node.UnderlyingRuntimeNode.NodeType);
-
-        //    foreach (var property in properties) {
-        //        FlowInput flow = (FlowInput)property.GetValue(node.UnderlyingRuntimeNode);
-
-        //        if (!string.IsNullOrEmpty(flow.GUID)) {
-        //            var findNode = FindEditorNode(nodes, flow.GUID);
-
-        //            if (findNode != null) {
-        //                var inputPort = node.Q<TractatoriStandardPort>(property.Name);
-        //                var outputPort = findNode.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First();
-
-        //                TractatoriEditorUtility.LinkPort(_graphView, outputPort, inputPort);
-        //            }
-        //        }
-        //    }
-        //}
-
-        //ConnectAllSequenceNodes(sequenceNodes, nodes);
-
-        //Debug.Log("Finish Loading Graph");
-
-        _graphView.FinishLoadGraph();
+        Debug.Log("Finish load graph");
     }
 
     void ConnectAllSequenceNodes(List<DynamicEditorSequenceNode> sequenceNodes, List<BaseEditorNode> allNodes) {
@@ -235,7 +202,7 @@ public class TractatoriGraphEditorWindow : EditorWindow
 
             // Link Entries
             if (sn.UnderlyingRuntimeNode.GUID == CurrentEditingAsset.EntrySequence) {
-                TractatoriEditorUtility.LinkPort(_graphView, _graphView.EntryNode.Q<TractatoriStandardPort>("output-port"), sn.Q<TractatoriStandardPort>(DynamicEditorSequenceNode.PreviousPortName));
+                TractatoriEditorUtility.LinkPort(GraphView, GraphView.EntryNode.Q<TractatoriStandardPort>("output-port"), sn.Q<TractatoriStandardPort>(DynamicEditorSequenceNode.PreviousPortName));
             }
 
             // Link the flow inputs
@@ -245,8 +212,8 @@ public class TractatoriGraphEditorWindow : EditorWindow
                 var flow = (FlowInput)property.Property.GetValue(sn.UnderlyingSequenceNode);
 
                 if (!string.IsNullOrEmpty(flow.GUID)) {
-                    if (_graphView.TrySearchEditorNode<BaseEditorNode>(flow.GUID, out var find)) {
-                        TractatoriEditorUtility.LinkPort(_graphView, find.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), sn.Q<TractatoriStandardPort>(property.Property.Name));
+                    if (GraphView.TrySearchEditorNode<BaseEditorNode>(flow.GUID, out var find)) {
+                        TractatoriEditorUtility.LinkPort(GraphView, find.Query<TractatoriStandardPort>().Where(x => x.direction == Direction.Output && x.OutputIndex == flow.OutputIndex).First(), sn.Q<TractatoriStandardPort>(property.Property.Name));
                     } else {
                         property.SetValue(sn.UnderlyingRuntimeNode, FlowInput.Null);
                     }
@@ -260,7 +227,7 @@ public class TractatoriGraphEditorWindow : EditorWindow
             // Link the next sequence node
             for (int j = 0; j < sequenceNodes.Count; j++) {
                 if (sn.UnderlyingSequenceNode.Next.GUID == sequenceNodes[j].UnderlyingSequenceNode.GUID) {
-                    TractatoriEditorUtility.LinkSequenceNodes(_graphView, sequenceNodes[i], sequenceNodes[j]);
+                    TractatoriEditorUtility.LinkSequenceNodes(GraphView, sequenceNodes[i], sequenceNodes[j]);
                     break;
                 }
             }
@@ -268,6 +235,6 @@ public class TractatoriGraphEditorWindow : EditorWindow
     }
 
     private void OnDisable() {
-        rootVisualElement.Remove(_graphView);
+        rootVisualElement.Remove(GraphView);
     }
 }

@@ -1,17 +1,16 @@
-﻿using System.Linq;
-using System.Collections;
+﻿using System.Reflection;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEditor.Experimental.GraphView;
+using UnityEngine.UIElements;
 
-[DrawerForNode(typeof(ObjectBindablePropertyNode))]
-public class EditorObjectBindablePropertyNode : BaseEditorConstantNode
-{
+[DrawerForNode(typeof(Boolean4BindablePropertyNode))]
+public class EditorBoolean4BindablePropertyNode : BaseEditorConstantNode {
     public override void Initialize() {
-        title = "Object Bindable Node";
+        title = "Boolean Bindable Node";
 
         RegenerateOutputPort();
 
@@ -58,7 +57,7 @@ public class EditorObjectBindablePropertyNode : BaseEditorConstantNode
     public override void InitializeFields(VisualElement contents) {
         TextField textField = new TextField();
         textField.multiline = false;
-        textField.SetValueWithoutNotify(((ObjectBindablePropertyNode)UnderlyingRuntimeNode).Name);
+        textField.SetValueWithoutNotify(((Boolean4BindablePropertyNode)UnderlyingRuntimeNode).Name);
         textField.RegisterValueChangedCallback(ValueChangeCallback);
 
         textField.style.maxWidth = new Length(200, LengthUnit.Pixel);
@@ -74,7 +73,7 @@ public class EditorObjectBindablePropertyNode : BaseEditorConstantNode
     }
 
     void ValueChangeCallback(ChangeEvent<string> evt) {
-        ((ObjectBindablePropertyNode)UnderlyingRuntimeNode).Name = evt.newValue;
+        ((Boolean4BindablePropertyNode)UnderlyingRuntimeNode).Name = evt.newValue;
         RegenerateOutputPort();
     }
 }

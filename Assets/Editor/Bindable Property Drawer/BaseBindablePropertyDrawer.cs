@@ -5,30 +5,24 @@ using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.UIElements;
 
-public abstract class BaseBindablePropertyDrawer
+public abstract class BaseBindablePropertyDrawer : VisualElement
 {
-    public PropertyBindingField Parent { get; private set; }
+    public BaseBindableProperty Property { get; private set; }
 
-    protected void DoExposedField(VisualElement container) {
+    protected void CreateOverridableToggle() {
         Toggle toggle = new Toggle("Overridable");
-        toggle.SetValueWithoutNotify(Parent.Property.Overridable);
-        toggle.RegisterValueChangedCallback(ExposedModifyCallback);
+        toggle.SetValueWithoutNotify(Property.Overridable);
+        toggle.RegisterValueChangedCallback(OverridableModifyCallback);
 
         toggle.Q<Label>(className: "unity-text-element").style.flexGrow = 1;
         toggle.Q(className: "unity-base-field__input").style.flexGrow = 0;
 
-        container.Add(toggle);
+        contentContainer.Add(toggle);
     }
 
-    protected virtual void ExposedModifyCallback(ChangeEvent<bool> evt) {
-        Parent.Property.Overridable = evt.newValue;
+    protected virtual void OverridableModifyCallback(ChangeEvent<bool> evt) {
+        Property.Overridable = evt.newValue;
     }
 
-    protected void ModifyLabel(VisualElement element, string labelClass = "unity-label", float width = 20) {
-        var label = element.Q<Label>(className: labelClass).style;
-        label.width = new Length(width, LengthUnit.Percent);
-        label.minWidth = StyleKeyword.Auto;
-    }
-
-    public abstract void Initialize(VisualElement container);
+    public abstract void Initialize();
 }

@@ -12,11 +12,13 @@ public class ManipulationContainer : ScriptableObject
     #region Bindable Properties
     [field: SerializeField] public List<ObjectBindableProperty> ObjectBindableProperties { get; set; }
     [field: SerializeField] public List<MVectorBindableProperty> VectorBindableProperties { get; set; }
+    [field: SerializeField] public List<BooleanBindableProperty> BooleanBindableProperties { get; set; }
     #endregion
 
     #region Override Bindable Properties
     public List<ObjectBindableProperty> OverrideObjectBindableProperties { get; set; }
     public List<MVectorBindableProperty> OverrideVectorBindableProperties { get; set; }
+    public List<BooleanBindableProperty> OverrideBooleanBindableProperties { get; set; }
     #endregion
 
     public string CurrentSequenceNode { get; private set; }
@@ -91,6 +93,10 @@ public class ManipulationContainer : ScriptableObject
 
     public MVectorBindableProperty FindVectorBindableProperty(string name) {
         return FindProperty(VectorBindableProperties, OverrideVectorBindableProperties, name);
+    }
+
+    public BooleanBindableProperty FindBooleanBindableProperty(string name) {
+        return FindProperty(BooleanBindableProperties, OverrideBooleanBindableProperties, name);
     }
 
     public T FindProperty<T>(List<T> properties, List<T> overrideProperties, string name) where T : BaseBindableProperty {

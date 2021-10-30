@@ -63,7 +63,6 @@ public class TractatoriGraphView : GraphView
 
                         if (inputNode is BaseSequenceNode sequenceInput && outputNode is BaseSequenceNode sequenceOutput) {
                             sequenceOutput.Next = FlowInput.Null;
-                            sequenceInput.Previous = FlowInput.Null;
 
                             break;
                         }

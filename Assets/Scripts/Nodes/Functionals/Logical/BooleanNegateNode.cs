@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CustomizeSearchPath("Functionals/Logical/Boolean Any Node")]
-public class BooleanAnyNode : BaseRuntimeNode
+[CustomizeSearchPath("Functionals/Logical/Boolean Negate Node")]
+public class BooleanNegateNode : BaseRuntimeNode
 {
     [field: SerializeField, ExpectedInputType(typeof(Boolean4))]
     public FlowInput Boolean { get; set; } = FlowInput.Null;
@@ -14,7 +14,7 @@ public class BooleanAnyNode : BaseRuntimeNode
             return;
         }
 
-        bool b = info.Container.EvaluateInput<Boolean4>(Boolean).Any();
-        output = new Boolean4(b, b, b, b);
+        bool b = info.Container.EvaluateInput<Boolean4>(Boolean).All();
+        output = !new Boolean4(b, b, b, b);
     }
 }

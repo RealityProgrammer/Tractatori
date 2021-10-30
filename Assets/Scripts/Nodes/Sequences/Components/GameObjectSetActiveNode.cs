@@ -2,8 +2,8 @@
 
 public class GameObjectSetActiveNode : BaseSequenceNode
 {
-    [field: SerializeField, ExpectedInputType(typeof(GameObject))] public FlowInput TargetGameObject { get; set; }
-    [field: SerializeField, ExpectedInputType(typeof(bool))] public FlowInput Value { get; set; }
+    [field: SerializeField, ExpectedInputType(typeof(GameObject))] public FlowInput TargetGameObject { get; set; } = FlowInput.Null;
+    [field: SerializeField, ExpectedInputType(typeof(bool))] public FlowInput Value { get; set; } = FlowInput.Null;
 
     private void Evaluate(NodeEvaluationInfo info) {
         if(TargetGameObject.IsNull())

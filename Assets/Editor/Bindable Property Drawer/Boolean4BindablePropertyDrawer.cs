@@ -5,8 +5,8 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-[BindablePropertyDrawerOf(typeof(ObjectBindableProperty))]
-public class ObjectBindablePropertyDrawer : BaseBindablePropertyDrawer {
+[BindablePropertyDrawerOf(typeof(BooleanBindableProperty))]
+public class Boolean4BindablePropertyDrawer : BaseBindablePropertyDrawer {
     public override void Initialize() {
         var nameLabel = new Label(Property.Name);
         nameLabel.style.marginLeft = 3;
@@ -32,20 +32,31 @@ public class ObjectBindablePropertyDrawer : BaseBindablePropertyDrawer {
 
         CreateOverridableToggle();
 
-        var objectField = new ObjectField("Object");
-        objectField.objectType = typeof(Object);
-        objectField.allowSceneObjects = false;
-        objectField.SetValueWithoutNotify(((ObjectBindableProperty)Property).Value);
-        objectField.RegisterValueChangedCallback(ValueChangeCallback);
+        var boolean = ((BooleanBindableProperty)Property).Value;
 
-        //ModifyLabel(objectField);
+        var toggleContainer = new VisualElement();
+        toggleContainer.style.flexDirection = FlexDirection.Row;
 
-        // objectField.Q<Label>(className: "unity-object-field-display__label").style.width = 0;
+        var label = new Label("Value");
+        label.style.flexGrow = 1;
+        label.style.marginLeft = 3;
+        toggleContainer.Add(label);
 
-        contentContainer.Add(objectField);
-    }
+        for (int i = 0; i < 4; i++) {
+            var toggle = new Toggle();
+            toggle.SetValueWithoutNotify(boolean[i]);
 
-    void ValueChangeCallback(ChangeEvent<Object> evt) {
-        ((ObjectBindableProperty)Property).Value = evt.newValue;
+            int _i = i;
+            toggle.RegisterValueChangedCallback((evt) => {
+                var old = ((BooleanBindableProperty)Property).Value;
+                old[_i] = evt.newValue;
+
+                ((BooleanBindableProperty)Property).Value = old;
+            });
+
+            toggleContainer.Add(toggle);
+        }
+
+        contentContainer.Add(toggleContainer);
     }
 }

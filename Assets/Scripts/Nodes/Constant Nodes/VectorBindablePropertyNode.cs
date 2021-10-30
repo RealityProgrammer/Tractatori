@@ -9,7 +9,7 @@ public class VectorBindablePropertyNode : BaseBindablePropertyNode {
         if (p == null) {
             output = MVector.Zero4;
         } else {
-            output = (MVector)p.GetValue();
+            output = p.Value;
         }
     }
 }

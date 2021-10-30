@@ -10,7 +10,7 @@ public sealed class ObjectBindablePropertyNode : BaseBindablePropertyNode
         if (p == null) {
             output = null;
         } else {
-            output = (UnityEngine.Object)p.GetValue();
+            output = p.Value;
         }
     }
 }

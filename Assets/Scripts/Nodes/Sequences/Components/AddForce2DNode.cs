@@ -2,8 +2,8 @@
 
 public class AddForce2DNode : BaseSequenceNode
 {
-    [field: SerializeField, ExpectedInputType(typeof(Rigidbody2D))] public FlowInput TargetRigidbody { get; set; }
-    [field: SerializeField, ExpectedInputType(typeof(MVector))] public FlowInput Force { get; set; }
+    [field: SerializeField, ExpectedInputType(typeof(Rigidbody2D))] public FlowInput TargetRigidbody { get; set; } = FlowInput.Null;
+    [field: SerializeField, ExpectedInputType(typeof(MVector))] public FlowInput Force { get; set; } = FlowInput.Null;
 
     private void Evaluate(NodeEvaluationInfo info) {
         if(TargetRigidbody.IsNull())
