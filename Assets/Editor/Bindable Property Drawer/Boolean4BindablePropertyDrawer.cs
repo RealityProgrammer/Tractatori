@@ -24,8 +24,13 @@ public class Boolean4BindablePropertyDrawer : BaseBindablePropertyDrawer {
                 return;
             }
 
-            Property.Name = evt.newValue;
-            nameLabel.text = evt.newValue;
+            if (TractatoriGraphEditorWindow.CurrentEditingAsset.FindBooleanBindableProperty(evt.newValue) == null) {
+                Property.Name = evt.newValue;
+                nameLabel.text = evt.newValue;
+            } else {
+                nameField.SetValueWithoutNotify(evt.previousValue);
+                EditorApplication.Beep();
+            }
         });
 
         contentContainer.Add(nameField);

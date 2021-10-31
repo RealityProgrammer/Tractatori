@@ -9,8 +9,9 @@ public class TestScript : MonoBehaviour
 {
     [SerializeField] ManipulationInitializer initializer;
 
-    public MVector floatVector;
-    public MVectorInt intVector;
+    private void Start() {
+        
+    }
 
     private void Update() {
         if (Input.GetKeyDown(KeyCode.C) && initializer != null) {

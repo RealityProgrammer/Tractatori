@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
@@ -17,8 +18,6 @@ public class VectorAxisSwapNode_Creation : BaseEditorFunctionalNode
 
         CreateDefaultInputPorts();
         CreateDefaultOutputPorts();
-
-        var fieldContainer = CreateFieldContainer();
 
         var enumContainer = new VisualElement();
         enumContainer.style.flexDirection = FlexDirection.Row;
@@ -41,7 +40,7 @@ public class VectorAxisSwapNode_Creation : BaseEditorFunctionalNode
         enumContainer.style.marginTop = 3;
         enumContainer.style.marginBottom = 3;
 
-        fieldContainer.Add(enumContainer);
+        FieldContainer.Add(enumContainer);
 
         RefreshExpandedState();
         RefreshPorts();

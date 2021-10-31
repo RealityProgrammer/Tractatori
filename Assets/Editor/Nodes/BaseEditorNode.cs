@@ -108,4 +108,32 @@ public class BaseEditorNode : Node
     public virtual void HandleGraphLoad(GraphLoadInformation container) {
         ConnectFlowInputs(container);
     }
+
+    private VisualElement _fieldElement;
+    public VisualElement FieldContainer {
+        get {
+            _fieldElement = _fieldElement ?? CreateFieldContainer();
+
+            return _fieldElement;
+        }
+    }
+    private VisualElement CreateFieldContainer() {
+        var contents = contentContainer.Q("contents");
+
+        var seperator = new VisualElement();
+        seperator.name = "seperator";
+        seperator.style.borderBottomWidth = 1;
+        seperator.style.backgroundColor = (Color)new Color32(35, 35, 35, 255);
+
+        contents.Add(seperator);
+
+        var fieldContainer = new VisualElement();
+        fieldContainer.style.height = StyleKeyword.Auto;
+        fieldContainer.style.width = StyleKeyword.Auto;
+        fieldContainer.style.backgroundColor = new Color(0.24f, 0.24f, 0.24f, 0.65f);
+
+        contents.Add(fieldContainer);
+
+        return fieldContainer;
+    }
 }

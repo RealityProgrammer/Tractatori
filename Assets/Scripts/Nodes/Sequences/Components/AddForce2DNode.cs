@@ -4,6 +4,7 @@ public class AddForce2DNode : BaseSequenceNode
 {
     [field: SerializeField, ExpectedInputType(typeof(Rigidbody2D))] public FlowInput TargetRigidbody { get; set; } = FlowInput.Null;
     [field: SerializeField, ExpectedInputType(typeof(MVector))] public FlowInput Force { get; set; } = FlowInput.Null;
+    [field: SerializeField] public ForceMode2D ForceMode { get; set; }
 
     private void Evaluate(NodeEvaluationInfo info) {
         if(TargetRigidbody.IsNull())
@@ -12,6 +13,6 @@ public class AddForce2DNode : BaseSequenceNode
             return;
         }
 
-        info.Container.EvaluateInput<Rigidbody2D>(TargetRigidbody).AddForce((Vector4)info.Container.EvaluateInput<MVector>(Force));
+        info.Container.EvaluateInput<Rigidbody2D>(TargetRigidbody).AddForce((Vector4)info.Container.EvaluateInput<MVector>(Force), ForceMode);
     }
 }

@@ -45,7 +45,9 @@ public class ManipulationContainer : ScriptableObject
     }
 
     public T EvaluateInput<T>(FlowInput input) {
-        return (T)EvaluateInput(input);
+        var evaluated = EvaluateInput(input);
+
+        return (T)evaluated;
     }
 	
     /// <summary>
@@ -100,13 +102,14 @@ public class ManipulationContainer : ScriptableObject
     }
 
     public T FindProperty<T>(List<T> properties, List<T> overrideProperties, string name) where T : BaseBindableProperty {
-        var original = properties.Where(x => x.Name == name).FirstOrDefault();
+        var original = properties.FirstOrDefault(x => x.Name == name);
+
         if (original == null) {
             return null;
         }
 
         if (original.Overridable) {
-            var @override = overrideProperties.Where(x => x.Name == name).FirstOrDefault();
+            var @override = overrideProperties.FirstOrDefault(x => x.Name == name);
 
             if (@override != null) {
                 return @override;
@@ -117,7 +120,7 @@ public class ManipulationContainer : ScriptableObject
     }
 
     public T FindRawProperty<T>(List<T> properties, string name) where T : BaseBindableProperty {
-        return properties.Where(x => x.Name == name).FirstOrDefault();
+        return properties.FirstOrDefault(x => x.Name == name);
     }
 
     public bool RemoveBindingProperty(string name) {

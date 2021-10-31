@@ -17,8 +17,6 @@ public class BooleanSampleNode_Creation : BaseEditorFunctionalNode {
         CreateDefaultInputPorts();
         CreateDefaultOutputPorts();
 
-        var fieldContainer = CreateFieldContainer();
-
         EnumField axisField = new EnumField("Axis", Node.Axis);
         axisField.style.flexGrow = 1;
         axisField.SetValueWithoutNotify(Node.Axis);
@@ -30,7 +28,7 @@ public class BooleanSampleNode_Creation : BaseEditorFunctionalNode {
         label.minWidth = StyleKeyword.Auto;
         label.flexGrow = 1;
 
-        fieldContainer.Add(axisField);
+        FieldContainer.Add(axisField);
 
         RefreshExpandedState();
         RefreshPorts();
